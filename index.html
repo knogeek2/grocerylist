@@ -16,6 +16,240 @@
 
         <title>Grocery List</title>
 
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const orderNoField = document.getElementById("orderNo");
+
+                // Autopopulate order number based on existing localStorage entries
+                const existingKeys = Object.keys(localStorage).filter(k => k.startsWith("order_"));
+                const existingNumbers = existingKeys.map(k => parseInt(k.replace("order_", ""), 10));
+                const nextOrderNo = existingNumbers.length ? Math.max(...existingNumbers) + 1 : 1000;
+
+                orderNoField.value = nextOrderNo.toString();
+
+                // Submit handler
+                document.getElementById("orderForm").addEventListener("submit", function (e) {
+                    e.preventDefault();
+
+                    const order = {
+                        orderNo: orderNoField.value.trim(),
+                        vendor: document.getElementById("vendor").value.trim(),
+                        orderDate: document.getElementById("orderDate").value.trim(),
+                        paymentMethod: document.getElementById("paymentMethod").value.trim(),
+                        vendorOrderNo: document.getElementById("vendorOrderNo").value.trim(),
+                        shippingMethod: document.getElementById("shippingMethod").value.trim(),
+                        lineItems: collectLineItems()
+                    };
+
+                    localStorage.setItem(`order_${order.orderNo}`, JSON.stringify(order));
+                });
+            });
+        </script>
+        <!--Local styles-->
+        <link rel="stylesheet"
+              href="./css/styles.css" />
+
+    </head>
+    <body>
+        <div class="container-fluid" id="maincontainer">
+            <div class="row">
+                <div class="col-md-8 offset-md-2">
+                    <div class="card mt-4">
+                        <div class="card-header">Order Entry</div>
+                        <div class="card-body">
+                            <form id="orderForm">
+                                <div class="form-row">
+                                    <div class="form-group col-md-3">
+                                        <label for="orderNo">Order Number</label>
+                                        <input type="text" class="form-control" id="orderNo" name="orderNo" required />
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <label for="vendor">Vendor</label>
+                                        <input type="text" class="form-control" id="vendor" name="vendor" required />
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <label for="orderDate">Order Date</label>
+                                        <input type="date" class="form-control" id="orderDate" name="orderDate" required />
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <label for="paymentMethod">Payment Method</label>
+                                        <input type="text" class="form-control" id="paymentMethod" name="paymentMethod" />
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-4">
+                                        <label for="vendorOrderNo">Vendor Order #</label>
+                                        <input type="text" class="form-control" id="vendorOrderNo" name="vendorOrderNo" />
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <label for="shippingMethod">Shipping Method</label>
+                                        <select class="form-control" id="shippingMethod" name="shippingMethod">
+                                            <option value="" disabled selected>Select method</option>
+                                            <option value="Pickup">Pickup</option>
+                                            <option value="Delivery">Delivery</option>
+                                            <option value="Courier">Courier</option>
+                                        </select>
+
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="card mt-4">
+                                <div class="card-header">Line Items</div>
+                                <div class="card-body">
+                                    <table class="table table-bordered" id="lineItemsTable">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>SKU</th>
+                                                <th>Description</th>
+                                                <th>Qty</th>
+                                                <th>Price Per</th>
+                                                <th>Received Qty</th>
+                                                <th>Discount (%)</th>
+                                                <th>Shipping</th>
+                                                <th>Order Price</th>
+                                                <th>Purchase Price</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="lineItemsBody">
+                                            <!-- Rows will be added dynamically -->
+                                        </tbody>
+                                    </table>
+                                    <button type="button" class="btn btn-primary" onclick="addLineItem()">Add Item</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                document.getElementById("orderForm").addEventListener("submit", function (e) {
+                    e.preventDefault();
+
+                    const order = {
+                        orderNo: orderNoField.value.trim(),
+                        vendor: document.getElementById("vendor").value.trim(),
+                        orderDate: document.getElementById("orderDate").value.trim(),
+                        paymentMethod: document.getElementById("paymentMethod").value.trim(),
+                        vendorOrderNo: document.getElementById("vendorOrderNo").value.trim(),
+                        shippingMethod: document.getElementById("shippingMethod").value.trim(),
+                        shippingCharge: parseFloat(document.getElementById("shippingCharge").value) || 0,
+                        lineItems: collectLineItems()
+                    };
+
+                    localStorage.setItem(`order_${order.orderNo}`, JSON.stringify(order));
+                });
+            });
+
+            function collectLineItems() {
+                const rows = document.querySelectorAll("#lineItemsBody tr");
+                const lineItems = [];
+
+                rows.forEach(row => {
+                    const sku = row.querySelector('[name="sku"]').value.trim();
+                    const description = row.querySelector('[name="description"]').value.trim();
+                    const qty = parseFloat(row.querySelector('[name="qty"]').value) || 0;
+                    const pricePer = parseFloat(row.querySelector('[name="price"]').value) || 0;
+                    const receivedQty = parseFloat(row.querySelector('[name="receivedQty"]').value) || 0;
+                    const discount = parseFloat(row.querySelector('[name="discount"]').value) || 0;
+                    const shipping = parseFloat(row.querySelector('[name="shipping"]').value) || 0;
+
+                    const unitCost = pricePer - discount + shipping;
+                    const orderPrice = qty * unitCost;
+                    const purchasePrice = receivedQty * unitCost;
+
+                    lineItems.push({
+                        sku,
+                        description,
+                        qty,
+                        pricePer,
+                        receivedQty,
+                        discount,
+                        orderPrice: parseFloat(orderPrice.toFixed(2)),
+                        purchasePrice: parseFloat(purchasePrice.toFixed(2))
+                    });
+                });
+
+                return lineItems;
+            }
+
+            function updatePrices(row) {
+                const qty = parseFloat(row.querySelector('[name="qty"]').value) || 0;
+                const receivedQty = parseFloat(row.querySelector('[name="receivedQty"]').value) || 0;
+                const price = parseFloat(row.querySelector('[name="price"]').value) || 0;
+                const discount = parseFloat(row.querySelector('[name="discount"]').value) || 0;
+
+                const subtotal = qty * price;
+                const orderPrice = subtotal - discount + shipping;
+
+                const receivedSubtotal = receivedQty * price;
+                const purchasePrice = receivedSubtotal - discount + shipping;
+
+                row.querySelector('[name="orderPrice"]').value = orderPrice.toFixed(2);
+                row.querySelector('[name="purchasePrice"]').value = purchasePrice.toFixed(2);
+            }
+
+            // Attach to input events
+            document.getElementById('lineItemsTable').addEventListener('input', function (e) {
+                const row = e.target.closest('tr');
+                updatePrices(row);
+            });
+
+            function onSKUChange(input) {
+                const vendor = document.getElementById("vendor").value.trim();
+                const validSKUs = ITEMVENDOR.filter(v => v.vendor === vendor).map(v => v.sku);
+                const sku = input.value.trim();
+
+                if (!validSKUs.includes(sku)) {
+                    alert("SKU not available for selected vendor.");
+                    input.classList.add("is-invalid");
+                    return;
+                }
+
+                input.classList.remove("is-invalid");
+
+                const avgPrice = getAveragePrice(sku); // from historical data
+                const priceInput = input.closest('tr').querySelector('[name="price"]');
+                priceInput.value = avgPrice || 0;
+            }
+
+            function addLineItem() {
+                const tbody = document.getElementById('lineItemsBody');
+                const row = document.createElement('tr');
+
+                // Default values
+                const defaultQty = 1;
+                const defaultPrice = 0.00;
+                const defaultReceivedQty = 0;
+                const defaultDiscount = 0.00;
+
+                const unitCost = defaultPrice - defaultDiscount + defaultShipping;
+                const orderPrice = defaultQty * unitCost;
+                const purchasePrice = defaultReceivedQty * unitCost;
+
+                row.innerHTML = `
+                    <td><input type="text" class="form-control" name="sku" onchange="onSKUChange(this)" required /></td>
+                    <td><input type="text" class="form-control" name="description" /></td>
+                    <td><input type="number" class="form-control" name="qty" min="1" value="${defaultQty}" required /></td>
+                    <td><input type="number" class="form-control" name="price" step="0.01" value="${defaultPrice}" required /></td>
+                    <td><input type="number" class="form-control" name="receivedQty" min="0" value="${defaultReceivedQty}" /></td>
+                    <td><input type="number" class="form-control" name="discount" step="0.01" value="${defaultDiscount}" /></td>
+                    <td><input type="text" class="form-control" name="orderPrice" value="${orderPrice.toFixed(2)}" readonly /></td>
+                    <td><input type="text" class="form-control" name="purchasePrice" value="${purchasePrice.toFixed(2)}" readonly /></td>
+                    <td><button type="button" class="btn btn-danger btn-sm" onclick="removeLineItem(this)">Remove</button></td>
+                `;
+
+                tbody.appendChild(row);
+            }
+
+            function removeLineItem(button) {
+                button.closest('tr').remove();
+            }
+        </script>
+
         <!--Bootstrap Styles-->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
               integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
@@ -25,18 +259,5 @@
                 integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
                 crossorigin="anonymous">
         </script>
-
-        <!--Local styles-->
-        <link rel="stylesheet"
-              href="./css/default.css" />
-    </head>
-    <body>
-        <div class="container-fluid" id="maincontainer">
-            <div class="flex-column" id="maincontainer.col1">
-                <div class="flex-row" id="maincontainer.row1">
-
-                </div>
-            </div>
-        </div>
     </body>
 </html>
