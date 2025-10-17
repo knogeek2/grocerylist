@@ -1,0 +1,60 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Item-Vendor</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+</head>
+<body class="container mt-4">
+    <h1 class="mb-3">Item-Vendor</h1>
+
+    <form id="itemVendorForm" class="mb-3">
+        <div class="form-row">
+            <div class="col-md-6">
+                <select class="form-control" id="itemSku" required>
+                    <option value="">Select Item</option>
+                    <!-- Hydrated from item.json -->
+                </select>
+            </div>
+            <div class="col-md-6">
+                <select class="form-control" id="vendorId" required>
+                    <option value="">Select Vendor</option>
+                    <!-- Hydrated from vendor.json -->
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row mt-2">
+            <div class="col-md-3">
+                <input type="number" class="form-control" id="leadtime" placeholder="Lead Time (days)" />
+            </div>
+            <div class="col-md-3">
+                <input type="date" class="form-control" id="lastPurchased" placeholder="Last Purchased" />
+            </div>
+            <div class="col-md-3">
+                <input type="date" class="form-control" id="unavailableSince" placeholder="Unavailable Since" />
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block mt-3">Link Item to Vendor</button>
+    </form>
+
+    <table class="table table-sm table-bordered table-striped mt-3">
+        <thead class="thead-light">
+            <tr>
+                <th>SKU</th>
+                <th>Vendor ID</th>
+                <th>Lead Time</th>
+                <th>Last Purchased</th>
+                <th>Unavailable Since</th>
+            </tr>
+        </thead>
+        <tbody id="itemVendorTableBody">
+            <!-- Hydrated from server or local fallback -->
+        </tbody>
+    </table>
+
+    <script src="itemvendor.js"></script>
+</body>
+</html>

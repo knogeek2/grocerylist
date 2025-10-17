@@ -1,0 +1,20 @@
+{
+  "table": "BRANDS_TBL",
+  "columns": {
+    "ABR": {
+      "type": "string",
+      "primaryKey": true,
+      "description": "Primary key. 3 characters in the MS Access version."
+    },
+    "BRANDNAME": {
+      "type": "string",
+      "required": true,
+      "description":  "Full brand name, originally 50 characters max"
+    },
+    "DESCRIPTION": {
+      "type": "string",
+      "nullable": true,
+      "description": "Long(ish) description of the brand. originally 255 characters max"
+    }
+  }
+}
