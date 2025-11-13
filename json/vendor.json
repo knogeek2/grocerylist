@@ -1,51 +1,25 @@
-{
-  "table": "VENDOR_TBL",
-  "columns": {
-    "VENDORID": {
-      "type": "string",
-      "primaryKey": true,
-      "description": "Short name of vendor (25 characters max in Access). Used as foreign key in ITEMVENDOR_TBL."
-    },
-    "VENDORNAME": {
-      "type": "string",
-      "required": true,
-      "description": "Full display name of vendor (50 characters max in Access)."
-    },
-    "REGION": {
-      "type": "string",
-      "nullable": true,
-      "description": "15-character region code where vendor is located for filtering and proximity logic."
-    },
-    "REGIONLONG": {
-      "type": "string",
-      "nullable": true,
-      "description": "Full name of region (255 characters max) for display and localization."
-    },
-    "STREET": {
-      "type": "string",
-      "nullable": true,
-      "description": "Street address of vendor."
-    },
-    "CITY": {
-      "type": "string",
-      "nullable": true,
-      "description": "City where vendor is located."
-    },
-    "STATE": {
-      "type": "string",
-      "nullable": true,
-      "description": "State or province code."
-    },
-    "POSTALCODE": {
-      "type": "string",
-      "nullable": true,
-      "description": "Postal or ZIP code."
-    },
-    "unavailableSince": {
-      "type": "string",
-      "format": "date",
-      "nullable": true,
-      "description": "Date this vendor was marked inactive. Preserves audit trail; replaces boolean ACTIVE."
-    }
+[
+  {
+    "VENDORID": "4LOVECHOCOLATE",
+    "VENDORNAME": "For the Love of Chocolate",
+    "REGION": "RVA",
+    "REGIONLONG": "Richmond, Va",
+    "STREET": "3136 W Cary St",
+    "CITY": "Richmond",
+    "STATE": "VA",
+    "POSTALCODE": "23221",
+    "ACTIVE": true
+  },
+  {
+    "VENDORID": "ADVANCEAUTOWBROAD",
+    "VENDORNAME": "Advance Auto, West Broad",
+    "REGION": "RVA",
+    "REGIONLONG": "Richmond, Va",
+    "STREET": "3321 West Broad Street",
+    "CITY": "Richmond",
+    "STATE": "VA",
+    "POSTALCODE": "23230",
+    "ACTIVE": true
   }
-}
+  // … continue for all 51 vendors
+]

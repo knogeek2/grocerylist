@@ -10,39 +10,102 @@
             brands = data;
             brands.forEach(addRow);
         })
-        .catch(() => {
-            brands = JSON.parse(localStorage.getItem("brands") || "[]");
-            brands.forEach(addRow);
+        .catch(error => {
+            console.error("Failed to load brands:", error);
+            alert("Brand fetch failed. Check console for details.");
+
+            // Fallback quoted out for debugging clarity
+            // brands = JSON.parse(localStorage.getItem("brands") || "[]");
+            // brands.forEach(addRow);
         });
 
     form.addEventListener("submit", function (e) {
         e.preventDefault();
 
-        const id = document.getElementById("brandId").value.trim();
-        const name = document.getElementById("brandName").value.trim();
+        const nameInput = document.getElementById("brandName");
+        const name = nameInput.value.trim();
 
-        if (!id || !name) {
-            alert("Brand ID and Name are required.");
+        if (!name) {
+            alert("Brand Name is required.");
+            nameInput.focus();
             return;
         }
+
+        const existingKeys = brands.map(b => b.id);
+        const id = generateKey(name, existingKeys);
+
+        if (!id) {
+            alert("Failed to generate Brand ID.");
+            return;
+        }
+
+        document.getElementById("brandId").value = id;
 
         const brand = { id, name };
         brands.push(brand);
         addRow(brand);
 
-        localStorage.setItem("brands", JSON.stringify(brands));
-
-        fetch("https://artsfirerva.com/grocerylist/save_brand.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(brands)
-        })
-            .then(response => response.text())
-            .then(data => console.log("Server response:", data))
-            .catch(error => console.error("Sync error:", error));
-
+        // ...sync logic...
         form.reset();
     });
+
+
+
+
+        // Fallback quoted out for debugging clarity
+        // localStorage.setItem("brands", JSON.stringify(brands));
+
+    localStorage.setItem("brands", JSON.stringify(brands));
+
+    fetch("https://artsfirerva.com/grocerylist/php/save_brand.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(brands)
+    })
+        .then(response => response.text())
+        .then(data => {
+            console.log("Server response:", data);
+            alert("Brand saved to server.");
+        })
+        .catch(error => {
+            console.error("Sync error:", error);
+            alert("Brand save failed. Check console for details.");
+        });
+
+    form.reset();
+
+    function generateKey(name, existingKeys) {
+        const base = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (!existingKeys.includes(base)) return base;
+
+        let counter = 1;
+        while (existingKeys.includes(`${base}_${counter}`)) {
+            counter++;
+        }
+        return `${base}_${counter}`;
+    }
+
+function findOrCreateBrand(name, brands) {
+    const normalized = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const existing = brands.find(b => b.id === normalized);
+
+    if (existing) return existing.id;
+
+    const existingKeys = brands.map(b => b.id);
+    const id = generateKey(name, existingKeys);
+    const newBrand = { id, name };
+    brands.push(newBrand);
+    addRow(newBrand);
+
+    // Optional sync
+    fetch("https://artsfirerva.com/grocerylist/php/save_brand.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(brands)
+    });
+
+    return id;
+}
 
     function addRow(brand) {
         const row = document.createElement("tr");

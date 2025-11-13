@@ -1,80 +1,138 @@
-﻿document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("itemForm");
-    const tbody = document.getElementById("itemTableBody");
-    const brandSelect = document.getElementById("brand");
-    let items = [];
+﻿// item.js
 
-    // Hydrate brand dropdown
-    fetch("https://artsfirerva.com/grocerylist/json/brand.json")
-        .then(response => response.json())
-        .then(brands => {
-            brands.forEach(b => {
+const BASE_URL = window.location.origin;
+const ITEM_JSON = `${BASE_URL}/json/item.json`;
+const BRAND_JSON = `${BASE_URL}/json/brand.json`;
+const VENDOR_JSON = `${BASE_URL}/json/vendor.json`;
+
+// Hydrate brand datalist
+fetch(BRAND_JSON)
+    .then(res => res.json())
+    .then(brands => {
+        brands.forEach(brand => {
+            const option = document.createElement("option");
+            option.value = brand;
+            brandOptions.appendChild(option);
+        });
+    })
+    .catch(err => console.error("Failed to load brand data:", err));
+
+// Hydrate vendor datalist
+fetch(VENDOR_JSON)
+    .then(res => res.json())
+    .then(vendors => {
+        vendors.forEach(vendor => {
+            if (vendor.ACTIVE) {
                 const option = document.createElement("option");
-                option.value = b.id;
-                option.textContent = b.name;
-                brandSelect.appendChild(option);
+                option.value = vendor.VENDORNAME;
+                vendorOptions.appendChild(option);
+            }
+        });
+    })
+    .catch(err => console.error("Failed to load vendor data:", err));
+
+// Generate VendorID (base name + timestamp fallback)
+function generateVendorID(vendorName, existingIDs = []) {
+    let base = vendorName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 25);
+    let candidate = base;
+
+    if (existingIDs.includes(candidate)) {
+        const ts = Date.now(); // milliseconds since epoch
+        candidate = `${base}-${ts}`;
+    }
+
+    return candidate;
+}
+
+// Wire VendorID preview
+const vendorInput = document.getElementById("vendor");
+const vendorIDField = document.getElementById("vendorID");
+
+vendorInput.addEventListener("input", () => {
+    const vendorName = vendorInput.value.trim();
+    if (vendorName) {
+        // Optionally hydrate existing IDs from vendor.json for collision check
+        fetch(VENDOR_JSON)
+            .then(res => res.json())
+            .then(vendors => {
+                const existingIDs = vendors.map(v => v.VENDORID.toLowerCase());
+                const vid = generateVendorID(vendorName, existingIDs);
+                vendorIDField.value = vid;
+            })
+            .catch(() => {
+                // Fallback: just generate without collision check
+                vendorIDField.value = generateVendorID(vendorName);
             });
-        });
-
-    // Load items from server
-    fetch("https://artsfirerva.com/grocerylist/json/item.json")
-        .then(response => response.json())
-        .then(data => {
-            items = data;
-            items.forEach(addRow);
-        })
-        .catch(() => {
-            items = JSON.parse(localStorage.getItem("items") || "[]");
-            items.forEach(addRow);
-        });
-
-    form.addEventListener("submit", function (e) {
-        e.preventDefault();
-
-        const sku = document.getElementById("sku").value.trim();
-        const upc = document.getElementById("upc").value.trim();
-        const itmname = document.getElementById("itmname").value.trim();
-        const description = document.getElementById("description").value.trim();
-        const brand = document.getElementById("brand").value;
-        const velocity = parseInt(document.getElementById("velocity").value) || null;
-        const firstavailable = document.getElementById("firstavailable").value;
-        const delisted = document.getElementById("delisted").value;
-        const snapyes = document.getElementById("snapyes").value === "true";
-
-        if (!sku || !itmname) {
-            alert("SKU and Item Name are required.");
-            return;
-        }
-
-        const item = { sku, upc, itmname, description, brand, velocity, firstavailable, delisted, snapyes };
-        items.push(item);
-        addRow(item);
-
-        localStorage.setItem("items", JSON.stringify(items));
-
-        fetch("https://artsfirerva.com/grocerylist/save_item.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(items)
-        })
-            .then(response => response.text())
-            .then(data => console.log("Server response:", data))
-            .catch(error => console.error("Sync error:", error));
-
-        form.reset();
-    });
-
-    function addRow(item) {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-      <td>${item.sku}</td>
-      <td>${item.itmname}</td>
-      <td>${item.brand}</td>
-      <td>${item.velocity ?? ""}</td>
-      <td>${item.firstavailable || ""}</td>
-      <td>${item.delisted || ""}</td>
-      <td>${item.snapyes ? "Yes" : "No"}</td>
-    `;
-        tbody.appendChild(row);
+    } else {
+        vendorIDField.value = "";
     }
 });
+
+// Load existing items into table
+fetch(ITEM_JSON)
+    .then(res => res.json())
+    .then(items => {
+        items.forEach(item => addRow(item));
+    })
+    .catch(err => console.error("Failed to load items:", err));
+
+// Add new item
+document.getElementById("itemForm").addEventListener("submit", e => {
+    e.preventDefault();
+
+    const sku = document.getElementById("sku").value.trim();
+    const upc = document.getElementById("upc").value.trim();
+    const itmname = document.getElementById("itmname").value.trim();
+    const description = document.getElementById("description").value.trim();
+    const brand = document.getElementById("brand").value.trim();
+    const vendor = document.getElementById("vendor").value.trim();
+    const vendorid = document.getElementById("vendorID").value.trim();
+    const firstavailable = document.getElementById("firstavailable").value;
+    const delisted = document.getElementById("delisted").value;
+    const snapyes = document.getElementById("snapyes").checked;
+
+    const newItem = {
+        sku,
+        upc,
+        itmname,
+        description,
+        brand,
+        vendor,
+        vendorid,
+        firstavailable,
+        delisted,
+        snapyes,
+        velocity: ""
+    };
+
+    fetch(`${BASE_URL}/php/save_item.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newItem)
+    })
+        .then(res => res.json())
+        .then(response => {
+            if (response.status === "success") {
+                addRow(newItem);
+                document.getElementById("itemForm").reset();
+                vendorIDField.value = "";
+            } else {
+                console.error("Save failed:", response.message);
+            }
+        })
+        .catch(err => console.error("Error saving item:", err));
+});
+
+// Add row to table
+function addRow(item) {
+    const table = document.getElementById("itemTable").getElementsByTagName("tbody")[0];
+    const row = table.insertRow();
+
+    row.innerHTML = `
+    <td>${item.sku || ""}</td>
+    <td>${item.upc || ""}</td>
+    <td>${item.itmname || ""}</td>
+    <td>${item.description || ""}</td>
+    <td>${item.brand || ""}</td>
+    <td>${item.vendor || ""}</td>
+    <td>${item.vendorid || ""}</td>

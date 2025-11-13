@@ -3,65 +3,78 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Item Management</title>
+    <title>Item</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
 </head>
 <body class="container mt-4">
-    <h1 class="mb-3">Items</h1>
+    <h1 class="mb-3">Item</h1>
 
     <form id="itemForm" class="mb-3">
+        <!-- UPC, SKU, Item Name -->
         <div class="form-row">
             <div class="col-md-3">
-                <input type="text" class="form-control" id="sku" placeholder="SKU" required />
-            </div>
-            <div class="col-md-3">
+                <label for="upc" class="sr-only">UPC</label>
                 <input type="text" class="form-control" id="upc" placeholder="UPC (max 15)" maxlength="15" />
             </div>
+            <div class="col-md-3">
+                <label for="itemSKU" class="sr-only">SKU</label>
+                <input type="text" class="form-control" id="itemSKU" placeholder="SKU" readonly />
+            </div>
             <div class="col-md-6">
+                <label for="itmname" class="sr-only">Item Name</label>
                 <input type="text" class="form-control" id="itmname" placeholder="Item Name" maxlength="50" required />
             </div>
         </div>
 
+        <!-- Description + Brand -->
         <div class="form-row mt-2">
             <div class="col-md-6">
+                <label for="description" class="sr-only">Description</label>
                 <input type="text" class="form-control" id="description" placeholder="Description" maxlength="255" />
             </div>
             <div class="col-md-6">
-                <select class="form-control" id="brand">
-                    <option value="">Select Brand</option>
+                <label for="brand" class="sr-only">Brand</label>
+                <input list="brandOptions" class="form-control" id="brand" placeholder="Type or select brand" />
+                <datalist id="brandOptions">
                     <!-- Hydrated from brand.json -->
-                </select>
+                </datalist>
             </div>
         </div>
 
+        <!-- Dates -->
         <div class="form-row mt-2">
             <div class="col-md-3">
-                <input type="number" class="form-control" id="velocity" placeholder="Velocity (days)" />
-            </div>
-            <div class="col-md-3">
+                <label for="firstavailable" class="sr-only">First Available</label>
                 <input type="date" class="form-control" id="firstavailable" placeholder="First Available" />
             </div>
             <div class="col-md-3">
+                <label for="delisted" class="sr-only">Delisted Date</label>
                 <input type="date" class="form-control" id="delisted" placeholder="Delisted Date" />
-            </div>
-            <div class="col-md-3">
-                <select class="form-control" id="snapyes">
-                    <option value="false">SNAP Ineligible</option>
-                    <option value="true">SNAP Eligible</option>
-                </select>
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block mt-3">Add Item</button>
+        <!-- SNAP Eligible -->
+        <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" id="snapyes">
+            <label class="form-check-label" for="snapyes">SNAP Eligible</label>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-row mt-3">
+            <div class="col-md-4 offset-md-4">
+                <button type="submit" class="btn btn-primary btn-block">Add Item</button>
+            </div>
+        </div>
     </form>
 
+    <!-- Item Table -->
     <table class="table table-sm table-bordered table-striped mt-3">
         <thead class="thead-light">
             <tr>
                 <th>SKU</th>
                 <th>Name</th>
                 <th>Brand</th>
-                <th>Velocity</th>
+                <th>Velocity (read-only)</th>
                 <th>Available</th>
                 <th>Delisted</th>
                 <th>SNAP</th>
