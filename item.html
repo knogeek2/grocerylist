@@ -1,0 +1,41 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Item List</title>
+
+        <!-- Link to the landing page CSS file -->
+        <link rel="stylesheet" href="./styles/styles.css">
+
+    </head>
+    <body>
+        <h2>Item List</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Brand</th>
+                    <th>Velocity</th>
+                    <th>First Available</th>
+                    <th>Obsolete</th>
+                    <th>DG</th>
+                    <th>SNAP Yes</th>
+                    <th>Ship Weight</th>
+                </tr>
+            </thead>
+            <tbody id="itemTableBody"></tbody>
+        </table>
+
+        <script type="module">
+            import { loadItems, renderItems } from './js/item.js';
+
+            loadItems().then(items => {
+                const tbody = document.getElementById('itemTableBody');
+                renderItems(items, tbody);
+            });
+        </script>
+    </body>
+</html>

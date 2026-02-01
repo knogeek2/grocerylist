@@ -1,0 +1,85 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order</title>
+
+    <!-- Link to the landing page CSS file -->
+    <link rel="stylesheet" href="./styles/styles.css">
+
+</head>
+<body>
+    <a href="grocerylist.html">← Back</a>
+    <h2>Order</h2>
+    <h3>Recent Orders</h3>
+    <div id="recent-orders-container" class="recent-orders-section">
+        <p>Loading recent orders...</p>
+    </div>
+    <section class="order-header" name="header">
+        <label for="orderNumber">Order Number</label>
+        <input type="number" id="orderNumber" name="orderNumber" />
+        <label for="vendor">Vendor</label>
+        <input type="text" id="vendor" name="vendor" />
+        <label for="vendorOrderNumber">Vendor Order Number</label>
+        <input type="text" id="vendorOrderNumber" name="vendorOrderNumber" value="" />
+        <label for="orderDate">Order Date</label>
+        <input type="date" id="orderDate" name="orderDate" value="" />
+        <label for="paymentMethod">Payment Method</label>
+        <input type="text" id="paymentMethod" name="paymentMethod" value="" />
+        <label for="shippingMethod">Shipping Method</label>
+        <input type="text" id="shippingMethod" name="shippingMethod" value="" />
+        <label for="trackingNumber">Tracking Number</label>
+        <input type="text" id="trackingNumber" name="trackingNumber" value="" />
+        <label for="orderType">Order Type</label>
+        <select id="orderType" name="orderType" size="2">
+            <option value="Order">Order</option>
+            <option value="Wish List" selected>Wish List</option>
+        </select>
+    </section>
+    <hr />
+    <h3>Items</h3>
+    <section class="item-row" name="orderitem">
+        <label for="itemName">Item Name</label>
+        <input type="text" id="itemName" name="itemName" value="" />
+        <label for="quantity">Quantity</label>
+        <input type="text" id="quantity" name="quantity" step="0.01" value="1" />
+        <label for="pricePerUOM">Price per UOM</label>
+        <input type="number" id="pricePerUOM" name="pricePerUOM" step="0.01" value="0" />
+        <label for="shippingWeight">Shipping Weight</label>
+        <input type="number" id="shippingWeight" name="shippingWeight" step="0.01" value="0" />
+        <label for="receivedQuantity">Received Quantity</label>
+        <input type="number" id="receivedQuantity" name="receivedQuantity" value="1" />
+        <label for="discount">Discount</label>
+        <input type="number" id="discount" name="discount" step="0.01" value="0" />
+        <label for="salesTax">Sales Tax</label>
+        <input type="number" id="salesTax" name="salesTax" step="0.01" />
+        <label for="orderPrice">Order Price</label>
+        <input type="number" id="orderPrice" name="orderPrice" step="0.01" />
+        <label for="purchasePrice">Purchase Price</label>
+        <input type="number" id="purchasePrice" name="purchasePrice" step="0.01" />
+    </section>
+    <hr />
+    <h3>Total</h3>
+    <section class="summary" name="footer">
+        <label for="subtotal">Subtotal</label>
+        <input type="number" id="subtotal" name="subtotal" step="0.01" />
+        <label for="totalWeight">Total Weight</label>
+        <input type="number" id="totalWeight" name="totalWeight" step="0.01" value="0" />
+        <label for="shipping">Shipping</label>
+        <input type="number" id="shipping" name="shipping" step="0.01" value="0" />
+        <label for="totalSalesTax">Total Sales Tax</label>
+        <input type="number" id="totalSalesTax" name="totalSalesTax" step="0.01" value="0" />
+        <label for="total">Total</label>
+        <input type="number" id="total" name="total" step="0.01" value="0" />
+    </section>
+
+    <script type="module">
+        import { order } from "./js/order.js";
+
+        order.initPage();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,121 @@
+﻿body {
+    font-family: Segoe UI,Arial,sans-serif;
+    margin: 0;
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+.tabs {
+    display: flex;
+    background: #1e40af;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.tab {
+    padding: 18px 36px;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+    .tab.active {
+        background: #1e3a8a;
+        border-bottom: 6px solid #60a5fa;
+    }
+
+.content {
+    padding: 34px;
+    max-width: 1580px;
+    margin: auto;
+    display: none;
+}
+
+    .content.active {
+        display: block;
+    }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.13);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+th {
+    background: #1e40af;
+    color: white;
+    padding: 16px;
+    text-align: left;
+}
+
+td {
+    padding: 14px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+tr:hover {
+    background: #f1f5f9;
+}
+
+.add {
+    background: #166534;
+    color: white;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+    .add:hover {
+        background: #1f7a40;
+    }
+
+.total {
+    font-size: 2.4em;
+    font-weight: bold;
+    text-align: right;
+    margin: 40px 0;
+    color: #1e40af;
+}
+
+#search {
+    width: 100%;
+    padding: 18px;
+    font-size: 19px;
+    border: 1px solid #94a3b8;
+    border-radius: 10px;
+    box-sizing: border-box;
+}
+
+.out {
+    color: #dc2626;
+    font-weight: bold;
+}
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+    .menu a {
+        display: block;
+        padding: 1rem;
+        background: #0077cc;
+        color: white;
+        text-align: center;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: bold;
+    }
+
+        .menu a:hover {
+            background: #005fa3;
+        }
+
+
