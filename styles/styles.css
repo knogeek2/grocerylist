@@ -124,7 +124,10 @@ th, td {
         text-align: right;
         color: #555;
     }
-
+    .recent-table tr.selected {
+        background-color: #e6f3ff;
+        font-weight: bold;
+    }
 /* Loading / error states */
 .recent-loading,
 .recent-error {
