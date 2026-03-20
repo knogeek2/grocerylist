@@ -1,98 +1,89 @@
 ﻿<!DOCTYPE html>
-
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
-    <!-- meta settings, including attempts to prevent caching.
-        Quote out caching tags if these cause problems. -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+    <title>Orders</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!--Page Title-->
-    <title>Order</title>
-
-    <!-- Link to the landing page CSS file -->
-    <link rel="stylesheet" href="./styles/styles.css">
+    <link rel="stylesheet" href="styles/order.css">
 </head>
+
 <body>
-    <a href="grocerylist.html">← Back</a>
-    <h2>Order</h2>
 
-    <!--Recent Orders-->
-    <section id="recent-orders-container" class="recent-orders-section" aria-labelledby="recent-heading">
-        <h3 id="recent-heading">Recent Orders</h3>
-        <p class="recent-loading">Loading recent orders...</p>
-    </section>
+    <h1>Orders</h1>
 
-    <!--Order Header-->
-    <section class="order-header" aria-labelledby="order-info-heading">
-        <h3 id="order-info-heading">Order Info</h3>
-        <label for="orderNumber">#</label>
-        <input type="number" id="orderNumber" name="orderNumber" />
-        <label for="vendor">Vendor</label>
-        <input type="text" id="vendor" name="vendor" />
-        <label for="vendorOrderNumber">Vendor Order #</label>
-        <input type="text" id="vendorOrderNumber" name="vendorOrderNumber" value="" />
-        <label for="orderDate">Date</label>
-        <input type="date" id="orderDate" name="orderDate" value="" />
-        <label for="paymentMethod">Payment Method</label>
-        <input type="text" id="paymentMethod" name="paymentMethod" value="" />
-        <label for="shippingMethod">Shipping Method</label>
-        <input type="text" id="shippingMethod" name="shippingMethod" value="" />
-        <label for="trackingNumber">Tracking Number</label>
-        <input type="text" id="trackingNumber" name="trackingNumber" value="" />
-        <label for="orderType">Type</label>
-        <select id="orderType" name="orderType" size="2">
-            <option value="Order">Order</option>
-            <option value="Wish List" selected>Wish List</option>
-        </select>
-    </section>
-    <hr />
-    <section id="order-items-container" aria-labelledby="items-heading">
-        <h3 id="items-heading">Items</h3>
-        <!-- placeholder or dynamic rows -->
-        <div class="item-row empty-message">No items loaded yet.</div>
-    </section>
-
-    <!-- Optional: Add button to add new item if needed later -->
-    <!-- <button id="add-item-btn">+ Add Item</button> -->
-    <hr />
-    <section class="summary" aria-labelledby="summary-heading">
-        <h3 id="summary-heading" class="visually-hidden">Order Summary</h3>
-        <!-- or make the heading visible: <h3>Order Summary</h3> -->
-
-        <div class="summary-row">
-            <label for="subtotal">Subtotal</label>
-            <input type="number" id="subtotal" name="subtotal" step="0.01" min="0" readonly />
-        </div>
-
-        <div class="summary-row">
-            <label for="totalWeight">Total Weight</label>
-            <input type="number" id="totalWeight" name="totalWeight" step="0.01" min="0" value="0" readonly />
-        </div>
-
-        <div class="summary-row">
-            <label for="shipping">Shipping</label>
-            <input type="number" id="shipping" name="shipping" step="0.01" min="0" value="0" />
-        </div>
-
-        <div class="summary-row">
-            <label for="totalSalesTax">Total Sales Tax</label>
-            <input type="number" id="totalSalesTax" name="totalSalesTax" step="0.01" min="0" value="0" readonly />
-        </div>
-
-        <div class="summary-row total-row">
-            <label for="total">Total</label>
-            <input type="number" id="total" name="total" step="0.01" min="0" value="0" readonly />
+    <!-- Recent Orders Sidebar -->
+    <section id="recent-orders">
+        <h2>Recent Orders</h2>
+        <div id="recent-orders-container">
+            <p class="recent-loading">Loading recent orders…</p>
         </div>
     </section>
 
+    <!-- Order Details -->
+    <section id="order-details">
+
+        <h2>Order Details</h2>
+
+        <div class="order-header">
+
+            <label>
+                Order #
+                <input type="text" name="orderNumber" readonly>
+            </label>
+
+            <label>
+                Vendor
+                <input type="text" name="vendor">
+            </label>
+
+            <label>
+                Vendor Order #
+                <input type="text" name="vendorOrderNumber">
+            </label>
+
+            <label>
+                Order Date
+                <input type="date" name="orderDate">
+            </label>
+
+            <label>
+                Payment Method
+                <input type="text" name="paymentMethod">
+            </label>
+
+            <label>
+                Shipping Method
+                <input type="text" name="shippingMethod">
+            </label>
+
+            <label>
+                Tracking Number
+                <input type="text" name="trackingNumber">
+            </label>
+
+            <label>
+                Order Type
+                <input type="text" name="orderType" readonly>
+            </label>
+
+        </div>
+
+        <h3>Items</h3>
+        <div id="order-items-container">
+            <p class="recent-loading">Select an order to view items.</p>
+        </div>
+
+    </section>
+
+    <!-- Load JS Modules -->
     <script type="module">
         import { order } from "./js/order.js";
-        order.initPage();
+        import { setDefaultOrderDate } from "./js/global.js";
 
+        // Initialize page
+        setDefaultOrderDate();
+        order.initPage();
     </script>
 
 </body>

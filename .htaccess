@@ -1,4 +1,15 @@
-<FilesMatch "\.json$">
-    ForceType application/json
-    Header set Content-Type "application/json"
-</FilesMatch>
+<IfModule mod_headers.c>
+    <FilesMatch "\.json$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+        # Disable ETag if you see weird 304s (optional but often helps in stubborn cases)
+        Header unset ETag
+        FileETag None
+    </FilesMatch>
+</IfModule>
+
+# Also disable any Expires module interference
+<IfModule mod_expires.c>
+    ExpiresActive Off
+</IfModule>

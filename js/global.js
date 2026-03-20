@@ -1,16 +1,14 @@
-//unquote the next line if you need to debug
+// js/global.js
+
 console.log("global.js loaded");
 
 // ===============================
-// Global functions and methods
+// Global helpers
 // ===============================
 
-console.log("global.js file STARTED executing");
-
 // --- Date helpers ---
-console.log("Current ISO Date");
 export function todayISO() {
-    return new Date().toISOString().split('T')[0];
+    return new Date().toISOString().split("T")[0];
 }
 
 // --- Auto-fill order date ---
@@ -20,9 +18,10 @@ export function setDefaultOrderDate() {
 }
 
 // --- Order number auto-increment ---
-let lastOrderNumber = 0; // placeholder for last order number storage
+// (You may replace this with a server-side or JSON-based generator later)
+let lastOrderNumber = 0;
 export function nextOrderNumber() {
-    lastOrderNumber += 10;
+    lastOrderNumber += 1;
     return lastOrderNumber;
 }
 
@@ -31,31 +30,11 @@ export function currentTimestamp() {
     return new Date().toLocaleString();
 }
 
-// --- Items --- 
+// --- Load item master list ---
 export async function loadItemMaster() {
-    const response = await fetch('./data/allprices.json');
-    const items = await response.json();
-    return items;
-}
-
-// JavaScript version of VBA's Nz function
-export function nz(value, type) {
-    switch (type) {
-        case "string":
-            return (typeof value === "string") ? value : "";
-        case "number":
-            return (typeof value === "number" && !isNaN(value)) ? value : 0;
-        case "boolean":
-            return (typeof value === "boolean") ? value : false;
-        case "date":
-            if (!value) return "9999-12-31";   // sentinel for missing/invalid
-            const d = new Date(value);
-            return isNaN(d) ? "9999-12-31" : d.toISOString().slice(0, 10);
-        case "array":
-            return Array.isArray(value) ? value : [];
-        default:
-            return value ?? "";
+    const response = await fetch("data/allprices.json");
+    if (!response.ok) {
+        throw new Error(`Failed to load allprices.json — status ${response.status}`);
     }
-
-    console.log("global.js finished — nz exported");
+    return await response.json();
 }

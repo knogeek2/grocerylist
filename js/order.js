@@ -1,6 +1,6 @@
 ﻿// js/order.js
 
-import { currentTimestamp, nz, todayISO } from "./global.js";
+import { currentTimestamp, todayISO } from "./global.js";
 
 export const order = {
     containerId: "recent-orders-container",
@@ -9,28 +9,27 @@ export const order = {
     recent: [],   // the top 10 (or fewer)
 
     async loadAndGroupAll() {
-        const response = await fetch("./data/order.json");
+        const response = await fetch("data/order.json");
         if (!response.ok) {
             throw new Error(`Failed to load order.json - status: ${response.status}`);
         }
 
         const rows = await response.json();
-
         const map = new Map();
 
         rows.forEach(row => {
-            const key = nz(row.orderNo || row.orderNumber, "string");
+            const key = row.orderNo || row.orderNumber || "";
             if (!key) return;
 
             if (!map.has(key)) {
                 map.set(key, {
                     orderNumber: key,
-                    vendor: nz(row.vendor, "string"),
-                    orderDate: nz(row.orderDate, "date"),
-                    vendorOrderNo: nz(row.vendorOrderNo, "string"),
-                    paymentMethod: nz(row.paymentMethod, "string"),
-                    shippingMethod: nz(row.shippingMethod, "string"),
-                    trackingNumber: nz(row.trackingNumber, "string"),
+                    vendor: row.vendor ?? "",
+                    orderDate: row.orderDate ?? "",
+                    vendorOrderNo: row.vendorOrderNo ?? "",
+                    paymentMethod: row.paymentMethod ?? "",
+                    shippingMethod: row.shippingMethod ?? "",
+                    trackingNumber: row.trackingNumber ?? "",
                     items: []
                 });
             }
@@ -38,12 +37,11 @@ export const order = {
             const ord = map.get(key);
 
             ord.items.push({
-                sku: nz(row.sku, "string"),
-                description: nz(row.description || row.itemDesc, "string"),
-                qty: nz(row.qty, "number"),
-                price: nz(row.price, "number"),
-                received: nz(row.received, "date"),   // or string if you prefer to keep as-is
-                // Add any other item fields you need
+                sku: row.sku ?? "",
+                description: row.description || row.itemDesc || "",
+                qty: Number(row.qty ?? 0),
+                price: Number(row.price ?? 0),
+                received: row.received ?? ""
             });
         });
 
@@ -73,33 +71,33 @@ export const order = {
     },
 
     async load(orderNumber) {
-        const response = await fetch("./data/order.json");
+        const response = await fetch("data/order.json");
         if (!response.ok) throw new Error("Failed to fetch order.json");
 
         const allRows = await response.json();
 
-        // Group on-the-fly for a single order (or use pre-grouped list if available)
-        const itemsForOrder = allRows.filter(r => nz(r.orderNo || r.orderNumber, "string") === orderNumber);
+        const itemsForOrder = allRows.filter(r =>
+            (r.orderNo || r.orderNumber || "") === orderNumber
+        );
 
         if (itemsForOrder.length === 0) return null;
 
-        // Take header info from first row
         const first = itemsForOrder[0];
 
         return {
-            orderNumber: nz(first.orderNo || first.orderNumber, "string"),
-            vendor: nz(first.vendor, "string"),
-            orderDate: nz(first.orderDate, "date"),
-            vendorOrderNo: nz(first.vendorOrderNo, "string"),
-            paymentMethod: nz(first.paymentMethod, "string"),
-            shippingMethod: nz(first.shippingMethod, "string"),
-            trackingNumber: nz(first.trackingNumber, "string"),
+            orderNumber: first.orderNo || first.orderNumber || "",
+            vendor: first.vendor ?? "",
+            orderDate: first.orderDate ?? "",
+            vendorOrderNo: first.vendorOrderNo ?? "",
+            paymentMethod: first.paymentMethod ?? "",
+            shippingMethod: first.shippingMethod ?? "",
+            trackingNumber: first.trackingNumber ?? "",
             items: itemsForOrder.map(row => ({
-                sku: nz(row.sku, "string"),
-                description: nz(row.description || row.itemDesc, "string"),
-                qty: nz(row.qty, "number"),
-                price: nz(row.price, "number"),
-                received: nz(row.received, "date"),
+                sku: row.sku ?? "",
+                description: row.description || row.itemDesc || "",
+                qty: Number(row.qty ?? 0),
+                price: Number(row.price ?? 0),
+                received: row.received ?? ""
             }))
         };
     },
@@ -185,78 +183,87 @@ export const order = {
 
         this.populateHeader(selected);
         this.populateItems(selected.items || []);
-        this.populateTotals(selected);
+        this.populateTotals?.(selected); // optional if you add totals later
 
         return true;
     },
 
     populateHeader(order) {
         const mappings = {
-            "orderNumber": order.orderNumber,
-            "vendor": order.vendor,
-            "vendorOrderNumber": order.vendorOrderNo,
-            "orderDate": order.orderDate,
-            "paymentMethod": order.paymentMethod,
-            "shippingMethod": order.shippingMethod,
-            "trackingNumber": order.trackingNumber,
+            "orderNumber": order.orderNumber || "",
+            "vendor": order.vendor || "",
+            "vendorOrderNumber": order.vendorOrderNo || "",
+            "orderDate": order.orderDate || "",
+            "paymentMethod": order.paymentMethod || "",
+            "shippingMethod": order.shippingMethod || "",
+            "trackingNumber": order.trackingNumber || "",
             "orderType": order.orderType || "Order"
         };
 
         Object.entries(mappings).forEach(([name, value]) => {
-            const el = document.querySelector(`[name="${name}"]`);
-            if (el) el.value = value ?? "";
+            const input = document.querySelector(`[name="${name}"]`);
+            if (input) input.value = value ?? "";
         });
     },
 
     populateItems(items) {
         const container = document.getElementById("order-items-container");
-        if (!container) return;
-
-        container.innerHTML = "";
-
-        if (items.length === 0) {
-            container.innerHTML = '<div class="item-row empty-message">No items in this order.</div>';
+        if (!container) {
+            console.warn("Items container not found");
             return;
         }
 
-        items.forEach(item => {
+        container.innerHTML = "";
+
+        if (!Array.isArray(items) || items.length === 0) {
+            const emptyMsg = document.createElement("div");
+            emptyMsg.className = "item-row empty-message";
+            emptyMsg.textContent = "No items in this order.";
+            container.appendChild(emptyMsg);
+            return;
+        }
+
+        items.forEach((item, index) => {
             const row = document.createElement("div");
             row.className = "item-row";
+            row.dataset.itemIndex = index;
 
-            row.innerHTML = `
-                <input type="text" value="${item.description || ""}" placeholder="Description">
-                <input type="number" value="${item.qty || 1}" step="0.01" placeholder="Qty">
-                <input type="number" value="${item.price || 0}" step="0.01" placeholder="Price">
-                <input type="text" value="${item.received || ""}" placeholder="Received">
-                <!-- expand with more fields as needed -->
-            `;
+            const descInput = document.createElement("input");
+            descInput.type = "text";
+            descInput.value = item.description || "";
+            descInput.placeholder = "Description";
+            descInput.name = `item-description-${index}`;
+
+            const qtyInput = document.createElement("input");
+            qtyInput.type = "number";
+            qtyInput.value = Number(item.qty) || 1;
+            qtyInput.step = "0.01";
+            qtyInput.min = "0";
+            qtyInput.placeholder = "Qty";
+            qtyInput.name = `item-qty-${index}`;
+
+            const priceInput = document.createElement("input");
+            priceInput.type = "number";
+            priceInput.value = Number(item.price) || 0;
+            priceInput.step = "0.01";
+            priceInput.min = "0";
+            priceInput.placeholder = "Price";
+            priceInput.name = `item-price-${index}`;
+
+            const receivedInput = document.createElement("input");
+            receivedInput.type = "text";
+            receivedInput.value = item.received || "";
+            receivedInput.placeholder = "Received";
+            receivedInput.name = `item-received-${index}`;
+
+            row.appendChild(descInput);
+            row.appendChild(qtyInput);
+            row.appendChild(priceInput);
+            row.appendChild(receivedInput);
 
             container.appendChild(row);
         });
     },
-
-    populateTotals(order) {
-        // Simple example – adjust based on your actual calculation needs
-        const subtotal = order.items.reduce((sum, i) => sum + (i.price || 0) * (i.qty || 1), 0);
-        const shipping = 0;     // pull from order.shipping if available
-        const salesTax = 0;     // pull from order.salesTax or calculate
-        const grandTotal = subtotal + shipping + salesTax;
-
-        const setValue = (id, val) => {
-            const el = document.getElementById(id);
-            if (el) el.value = Number(val).toFixed(2);
-        };
-
-        setValue("subtotal", subtotal);
-        setValue("totalWeight", 0);     // calculate if needed
-        setValue("shipping", shipping);
-        setValue("totalSalesTax", salesTax);
-        setValue("total", grandTotal);
-    },
-
-    // ────────────────────────────────────────────────
-    // Other original methods (kept, with minor camelCase consistency)
-    // ────────────────────────────────────────────────
 
     createBlank() {
         return {
@@ -275,27 +282,6 @@ export const order = {
 
     search(term) {
         term = term.toLowerCase();
-        return this.list.filter(o =>
-            o.orderNumber.includes(term) ||
-            o.vendor.toLowerCase().includes(term)
-        );
-    },
-
-    getMostRecent() {
-        if (this.list.length === 0) return null;
-        return this.list.reduce((latest, curr) =>
-            new Date(curr.orderDate) > new Date(latest.orderDate) ? curr : latest
-        );
-    },
-
-    isClosed(order) {
-        return order.items.length > 0 &&
-            order.items.every(item => (item.received || 0) >= (item.qty || 0));
-    },
-
-    getLockState(order) {
-        return {
-            editable: !this.isClosed(order)
-        };
+        return
     }
-};
+}

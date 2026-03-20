@@ -1,4 +1,7 @@
-﻿body {
+﻿/* ============================
+   Base Layout
+============================ */
+body {
     font-family: Arial, sans-serif;
     max-width: 900px;
     margin: 0 auto;
@@ -8,6 +11,7 @@
 
 button {
     cursor: pointer;
+    width: 100%;
 }
 
 .form-row {
@@ -27,6 +31,21 @@ label {
     margin-bottom: 0.25rem;
 }
 
+textarea {
+    width: 100%;
+    min-height: 180px;
+    padding: 0.5rem;
+    font-family: monospace;
+    font-size: 0.95rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    margin: 5px 0;
+}
+
+/* ============================
+   Responsive
+============================ */
 @media (max-width: 600px) {
     body {
         padding: 10px;
@@ -36,14 +55,29 @@ label {
         font-size: 0.9rem;
         padding: 0.4rem;
     }
+
+    /* Stack columns on mobile */
+    #recent-orders,
+    #order-details {
+        float: none;
+        width: 100%;
+        padding: 0;
+        border: none;
+    }
 }
 
+/* ============================
+   Sections
+============================ */
 .section {
     border-top: 1px solid #ddd;
     margin-top: 2rem;
     padding-top: 1rem;
 }
 
+/* ============================
+   Tables
+============================ */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -61,6 +95,9 @@ th, td {
     text-align: left;
 }
 
+/* ============================
+   Totals
+============================ */
 .total {
     font-size: 1.4em;
     font-weight: bold;
@@ -73,7 +110,9 @@ th, td {
     font-weight: bold;
 }
 
-/* Recent orders list */
+/* ============================
+   Recent Orders (existing)
+============================ */
 .recent-orders-section {
     margin: 2rem 0;
     padding: 1.5rem;
@@ -124,10 +163,12 @@ th, td {
         text-align: right;
         color: #555;
     }
+
     .recent-table tr.selected {
         background-color: #e6f3ff;
         font-weight: bold;
     }
+
 /* Loading / error states */
 .recent-loading,
 .recent-error {
@@ -137,4 +178,20 @@ th, td {
 
 .recent-error {
     color: #c0392b;
+}
+
+/* ============================
+   NEW: Two-Column Layout
+============================ */
+#recent-orders {
+    float: left;
+    width: 30%;
+    padding-right: 20px;
+    border-right: 1px solid #ccc;
+}
+
+#order-details {
+    float: left;
+    width: 70%;
+    padding-left: 20px;
 }
