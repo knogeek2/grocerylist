@@ -9,7 +9,7 @@ export const order = {
     recent: [],   // the top 10 (or fewer)
 
     async loadAndGroupAll() {
-        const response = await fetch("data/order.json");
+        const response = await fetch("./data/order.json");
         if (!response.ok) {
             throw new Error(`Failed to load order.json - status: ${response.status}`);
         }

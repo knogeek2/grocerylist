@@ -106,3 +106,47 @@ document.getElementById("clear-btn").addEventListener("click", () => {
     fileInput.value = "";   // This clears the chosen file name
 });
 
+// tools.js
+
+export async function debugShowOneOrder() {
+    const orderNumber = "587";   // hard‑coded for debugging
+
+    console.log(`🔍 Debug: loading order ${orderNumber}`);
+
+    try {
+        const response = await fetch("./data/order.json");
+        if (!response.ok) {
+            console.error("Failed to load order.json", response.status);
+            return;
+        }
+
+        const rows = await response.json();
+
+        // Filter rows for this order
+        const items = rows.filter(r =>
+            (r.orderNo || r.orderNumber || "") === orderNumber
+        );
+
+        if (items.length === 0) {
+            console.warn(`Order ${orderNumber} not found in JSON`);
+            return;
+        }
+
+        console.log("Raw rows for this order:", items);
+
+        // Build a simple grouped object
+        const first = items[0];
+        const order = {
+            orderNumber: first.orderNo || first.orderNumber || "",
+            vendor: first.vendor ?? "",
+            orderDate: first.orderDate ?? "",
+            items: items
+        };
+
+        console.log("Grouped order object:", order);
+
+    } catch (err) {
+        console.error("debugShowOneOrder() failed:", err);
+    }
+}
+

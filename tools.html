@@ -11,6 +11,10 @@
 
 <body>
     <h1>Tools</h1>
+
+    <h2>Load One Order</h2>
+    <button id="debug-order-btn">Debug: Show One Order</button>
+    <hr />
     <h2>CSV → JSON Converter</h2>
 
     <div class="form-row">
@@ -33,6 +37,15 @@
     <button id="download-btn">Download JSON</button>
     <button id="clear-btn">Clear</button>
 
-    <script src="js/tools.js"></script>
+    <script type="module">
+        import { debugShowOneOrder } from "./js/tools.js";
+
+        document.getElementById("debug-order-btn")
+            .addEventListener("click", () => {
+                debugShowOneOrder();
+            });
+    </script>
+
+
 </body>
 </html>
