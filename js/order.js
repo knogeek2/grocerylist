@@ -23,10 +23,11 @@ export const order = {
 
             if (!map.has(key)) {
                 map.set(key, {
-                    orderNumber: key,
+                    orderNumber: row.orderNumber ?? key,
                     vendor: row.vendor ?? "",
-                    orderDate: row.orderDate ?? "",
-                    vendorOrderNo: row.vendorOrderNo ?? "",
+                    orderType: row.orderType ?? "",
+                    vendorOrderNumber: row.vendorOrderNumber ?? "",
+                    orderDate: row.orderDate || "2045-12-31",
                     paymentMethod: row.paymentMethod ?? "",
                     shippingMethod: row.shippingMethod ?? "",
                     trackingNumber: row.trackingNumber ?? "",
@@ -38,10 +39,14 @@ export const order = {
 
             ord.items.push({
                 sku: row.sku ?? "",
-                description: row.description || row.itemDesc || "",
-                qty: Number(row.qty ?? 0),
-                price: Number(row.price ?? 0),
-                received: row.received ?? ""
+                orderQty: Number(row.orderQty ?? 0),
+                pricePerUOM: Number(row.pricePerUOM ?? 0),
+                received: row.received || "2045-12-31",
+                receivedQty: Number(row.receivedQty ?? 0),
+                discount: Number(row.discount ?? 0),
+                salesTax: Number(row.salesTax ?? 0),
+                orderPrice: Number(row.orderPrice ?? 0),
+                receivedPrice: Number(row.receivedPrice ?? 0)
             });
         });
 
@@ -85,19 +90,24 @@ export const order = {
         const first = itemsForOrder[0];
 
         return {
-            orderNumber: first.orderNo || first.orderNumber || "",
+            orderNumber: first.orderNumber ?? "",
             vendor: first.vendor ?? "",
+            orderType: first.orderType ?? "",
+            vendorOrderNumber: first.vendorOrderNumber ?? "",
             orderDate: first.orderDate ?? "",
-            vendorOrderNo: first.vendorOrderNo ?? "",
             paymentMethod: first.paymentMethod ?? "",
             shippingMethod: first.shippingMethod ?? "",
             trackingNumber: first.trackingNumber ?? "",
             items: itemsForOrder.map(row => ({
                 sku: row.sku ?? "",
-                description: row.description || row.itemDesc || "",
-                qty: Number(row.qty ?? 0),
-                price: Number(row.price ?? 0),
-                received: row.received ?? ""
+                orderQty: Number(row.orderQty ?? 0),
+                pricePerUOM: Number(row.pricePerUOM ?? 0),
+                received: row.received || "2045-12-31",
+                receivedQty: Number(row.receivedQty ?? 0),
+                discount: Number(row.discount ?? 0),
+                salesTax: Number(row.salesTax ?? 0),
+                orderPrice: Number(row.orderPrice ?? 0),
+                receivedPrice: Number(row.receivedPrice ?? 0),
             }))
         };
     },
@@ -192,7 +202,7 @@ export const order = {
         const mappings = {
             "orderNumber": order.orderNumber || "",
             "vendor": order.vendor || "",
-            "vendorOrderNumber": order.vendorOrderNo || "",
+            "vendorOrderNumber": order.vendorOrderNumber || "",
             "orderDate": order.orderDate || "",
             "paymentMethod": order.paymentMethod || "",
             "shippingMethod": order.shippingMethod || "",
@@ -228,23 +238,16 @@ export const order = {
             row.className = "item-row";
             row.dataset.itemIndex = index;
 
-            const descInput = document.createElement("input");
-            descInput.type = "text";
-            descInput.value = item.description || "";
-            descInput.placeholder = "Description";
-            descInput.name = `item-description-${index}`;
-
             const qtyInput = document.createElement("input");
             qtyInput.type = "number";
-            qtyInput.value = Number(item.qty) || 1;
+            qtyInput.value = Number(item.orderQty) || 1;
             qtyInput.step = "0.01";
             qtyInput.min = "0";
-            qtyInput.placeholder = "Qty";
+            qtyInput.placeholder = "orderQty";
             qtyInput.name = `item-qty-${index}`;
-
             const priceInput = document.createElement("input");
             priceInput.type = "number";
-            priceInput.value = Number(item.price) || 0;
+            priceInput.value = Number(item.pricePerUOM) || 0;
             priceInput.step = "0.01";
             priceInput.min = "0";
             priceInput.placeholder = "Price";
@@ -255,8 +258,6 @@ export const order = {
             receivedInput.value = item.received || "";
             receivedInput.placeholder = "Received";
             receivedInput.name = `item-received-${index}`;
-
-            row.appendChild(descInput);
             row.appendChild(qtyInput);
             row.appendChild(priceInput);
             row.appendChild(receivedInput);
