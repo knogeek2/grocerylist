@@ -76,40 +76,11 @@ export const order = {
     },
 
     async load(orderNumber) {
-        const response = await fetch("data/order.json");
-        if (!response.ok) throw new Error("Failed to fetch order.json");
+        if (this.list.length === 0) {
+            await this.loadAndGroupAll();
+        }
 
-        const allRows = await response.json();
-
-        const itemsForOrder = allRows.filter(r =>
-            (r.orderNo || r.orderNumber || "") === orderNumber
-        );
-
-        if (itemsForOrder.length === 0) return null;
-
-        const first = itemsForOrder[0];
-
-        return {
-            orderNumber: first.orderNumber ?? "",
-            vendor: first.vendor ?? "",
-            orderType: first.orderType ?? "",
-            vendorOrderNumber: first.vendorOrderNumber ?? "",
-            orderDate: first.orderDate ?? "",
-            paymentMethod: first.paymentMethod ?? "",
-            shippingMethod: first.shippingMethod ?? "",
-            trackingNumber: first.trackingNumber ?? "",
-            items: itemsForOrder.map(row => ({
-                sku: row.sku ?? "",
-                orderQty: Number(row.orderQty ?? 0),
-                pricePerUOM: Number(row.pricePerUOM ?? 0),
-                received: row.received || "2045-12-31",
-                receivedQty: Number(row.receivedQty ?? 0),
-                discount: Number(row.discount ?? 0),
-                salesTax: Number(row.salesTax ?? 0),
-                orderPrice: Number(row.orderPrice ?? 0),
-                receivedPrice: Number(row.receivedPrice ?? 0),
-            }))
-        };
+        return this.list.find(o => o.orderNumber == orderNumber) || null;
     },
 
     async initPage() {
