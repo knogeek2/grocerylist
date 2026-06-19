@@ -209,29 +209,35 @@ export const order = {
             row.className = "item-row";
             row.dataset.itemIndex = index;
 
-            const qtyInput = document.createElement("input");
-            qtyInput.type = "number";
-            qtyInput.value = Number(item.orderQty) || 1;
-            qtyInput.step = "0.01";
-            qtyInput.min = "0";
-            qtyInput.placeholder = "orderQty";
-            qtyInput.name = `item-qty-${index}`;
-            const priceInput = document.createElement("input");
-            priceInput.type = "number";
-            priceInput.value = Number(item.pricePerUOM) || 0;
-            priceInput.step = "0.01";
-            priceInput.min = "0";
-            priceInput.placeholder = "Price";
-            priceInput.name = `item-price-${index}`;
+            const fields = [
+                ["sku", "text", "SKU"],
+                ["orderQty", "number", "Qty"],
+                ["pricePerUOM", "number", "Price/UOM"],
+                ["received", "text", "Received"],
+                ["receivedQty", "number", "Received Qty"],
+                ["discount", "number", "Discount"],
+                ["salesTax", "number", "Sales Tax"],
+                ["orderPrice", "number", "Order Price"],
+                ["receivedPrice", "number", "Received Price"]
+            ];
 
-            const receivedInput = document.createElement("input");
-            receivedInput.type = "text";
-            receivedInput.value = item.received || "";
-            receivedInput.placeholder = "Received";
-            receivedInput.name = `item-received-${index}`;
-            row.appendChild(qtyInput);
-            row.appendChild(priceInput);
-            row.appendChild(receivedInput);
+            fields.forEach(([key, type, placeholder]) => {
+                const input = document.createElement("input");
+
+                if (type === "number") {
+                    input.type = "number";
+                    input.step = "0.01";
+                    input.min = "0";
+                    input.value = Number(item[key] ?? 0);
+                } else {
+                    input.type = "text";
+                    input.value = item[key] ?? "";
+                }
+
+                input.placeholder = placeholder;
+                input.name = `item-${key}-${index}`;
+                row.appendChild(input);
+            });
 
             container.appendChild(row);
         });

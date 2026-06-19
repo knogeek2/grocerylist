@@ -38,3 +38,18 @@ export async function loadItemMaster() {
     }
     return await response.json();
 }
+
+// --- Universal null-normalization (Access-style Nz) ---
+export function nz(value, type) {
+    switch (type) {
+        case "text":
+            return value ?? "";
+        case "number":
+            return Number(value ?? 0);
+        case "date":
+            return value || "2044-01-01";
+        default:
+            return value ?? "";
+    }
+}
+
