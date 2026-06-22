@@ -81,10 +81,10 @@
         import { order } from "./js/order.js";
         import { setDefaultOrderDate } from "./js/global.js";
 
-        // Initialize page
         setDefaultOrderDate();
-        order.initPage();
+        order.loadRecent().then(() => order.renderRecent());
     </script>
+
 
 </body>
 </html>
