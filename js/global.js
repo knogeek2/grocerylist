@@ -53,3 +53,42 @@ export function nz(value, type) {
     }
 }
 
+// --- Number formatting (en-US) ---
+export function numberFormat(value, fmt) {
+    // Early exit: no format string provided
+    if (!fmt) return value;
+
+    const num = Number(value ?? 0);
+
+    switch (fmt) {
+        case "standard":
+            return new Intl.NumberFormat("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(num);
+
+        case "accounting":
+            if (num < 0) {
+                return `(${Math.abs(num).toFixed(2)})`;
+            }
+            return num.toFixed(2);
+
+        case "integer":
+            return Math.round(num).toString();
+
+        case "percent":
+            return `${(num * 100).toFixed(1)}%`;
+
+        // Case Else — unknown format, return raw
+        default:
+            return value;
+    }
+}
+
+export function itemIdentity(item) {
+    const sku = item.sku ?? "";
+    const name = item.itemName ?? "";
+    return `${sku} - ${name}`.trim();
+}
+
+

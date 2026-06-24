@@ -76,13 +76,17 @@
 
     </section>
 
+    <div id="order-footer-container"></div>
+
     <!-- Load JS Modules -->
     <script type="module">
         import { order } from "./js/order.js";
         import { setDefaultOrderDate } from "./js/global.js";
 
         setDefaultOrderDate();
-        order.loadRecent().then(() => order.renderRecent());
+        order.load().then(() => {
+            order.renderRecent(document.getElementById("recent-orders"));
+        });
     </script>
 
 
