@@ -6,89 +6,132 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link rel="stylesheet" href="./styles/styles.css">
+
+    <style>
+        #orders-layout {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        #recent-orders {
+            width: 250px;
+            flex-shrink: 0;
+        }
+
+        #order-details {
+            flex: 1;
+        }
+
+        .toggle-btn {
+            margin-top: 10px;
+            padding: 6px 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 <body>
 
     <h1>Orders</h1>
 
-    <!-- Recent Orders Sidebar -->
-    <section id="recent-orders">
-        <h2>Recent Orders</h2>
-        <div id="recent-orders-container">
-            <p class="recent-loading">Loading recent orders…</p>
-        </div>
-    </section>
+    <div id="orders-layout">
 
-    <!-- Order Details -->
-    <section id="order-details">
+        <!-- Recent Orders Sidebar -->
+        <section id="recent-orders">
+            <h2>Recent Orders</h2>
 
-        <h2>Order Details</h2>
+            <button id="new-order-btn" class="toggle-btn">New Order</button>
 
-        <div class="order-header">
+            <div id="recent-orders-container">
+                <p class="recent-loading">Loading recent orders…</p>
+            </div>
 
-            <label>
-                Order #
-                <input type="text" name="orderNumber" readonly>
-            </label>
+            <button id="toggle-open-all" class="toggle-btn">Show All Orders</button>
+        </section>
 
-            <label>
-                Vendor
-                <input type="text" name="vendor">
-            </label>
+        <!-- Order Details -->
+        <section id="order-details">
+            <h2>Order Details</h2>
 
-            <label>
-                Vendor Order #
-                <input type="text" name="vendorOrderNumber">
-            </label>
+            <div class="order-header">
+                <label>Order # <input type="text" name="orderNumber" readonly></label>
+                <label>Vendor <input type="text" name="vendor"></label>
+                <label>Vendor Order # <input type="text" name="vendorOrderNumber"></label>
 
-            <label>
-                Order Date
-                <input type="date" name="orderDate">
-            </label>
+                <!-- DATE INPUT (patched for ISO timestamps) -->
+                <label>Order Date <input type="date" name="orderDate"></label>
 
-            <label>
-                Payment Method
-                <input type="text" name="paymentMethod">
-            </label>
+                <label>Payment Method <input type="text" name="paymentMethod"></label>
+                <label>Shipping Method <input type="text" name="shippingMethod"></label>
+                <label>Tracking Number <input type="text" name="trackingNumber"></label>
+                <label>Order Type <input type="text" name="orderType" readonly></label>
+            </div>
 
-            <label>
-                Shipping Method
-                <input type="text" name="shippingMethod">
-            </label>
+            <h3>Items</h3>
+            <div id="order-items-container">
+                <p class="recent-loading">Select an order to view items.</p>
+            </div>
 
-            <label>
-                Tracking Number
-                <input type="text" name="trackingNumber">
-            </label>
+        </section>
 
-            <label>
-                Order Type
-                <input type="text" name="orderType" readonly>
-            </label>
-
-        </div>
-
-        <h3>Items</h3>
-        <div id="order-items-container">
-            <p class="recent-loading">Select an order to view items.</p>
-        </div>
-
-    </section>
+    </div>
 
     <div id="order-footer-container"></div>
 
-    <!-- Load JS Modules -->
     <script type="module">
         import { order } from "./js/order.js";
-        import { setDefaultOrderDate } from "./js/global.js";
 
-        setDefaultOrderDate();
+        let showAll = false;
+
+        // AUTOSAVE CALLBACK
+        function saveOrder(ord) {
+            console.log("Autosaving order:", ord.orderNumber, ord);
+            // Later: POST to server or write to file
+        }
+
+        order.saveCallback = saveOrder;
+
+        // CREATE NEW ORDER
+        document.getElementById("new-order-btn")
+            .addEventListener("click", () => {
+                const newOrder = order.createBlankOrder();
+                order.orders.unshift(newOrder);
+
+                const listContainer = document.getElementById("recent-orders-container");
+                order.renderRecent(listContainer, showAll ? "all" : "open");
+
+                order.renderOrderDetails(newOrder);
+
+                if (order.saveCallback) order.saveCallback(newOrder);
+            });
+
+        // TOGGLE OPEN/ALL
+        const toggleBtn = document.getElementById("toggle-open-all");
+
+        toggleBtn.addEventListener("click", () => {
+            showAll = !showAll;
+            toggleBtn.textContent = showAll ? "Show Only Open" : "Show All Orders";
+
+            const listContainer = document.getElementById("recent-orders-container");
+            order.renderRecent(listContainer, showAll ? "all" : "open");
+
+            const first = listContainer.querySelector(".recent-order");
+            if (first) first.click();
+        });
+
+        // INITIAL LOAD
         order.load().then(() => {
-            order.renderRecent(document.getElementById("recent-orders"));
+            const listContainer = document.getElementById("recent-orders-container");
+
+            order.renderRecent(listContainer, "open");
+
+            const first = listContainer.querySelector(".recent-order");
+            if (first) first.click();
         });
     </script>
-
 
 </body>
 </html>
