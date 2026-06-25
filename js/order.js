@@ -5,17 +5,27 @@ import { orderedItemLabels } from "./orderedItemLabels.js";
 
 export const order = {
 
-    saveCallback: null,   // AUTOSAVE HOOK
+    // ★ Track whether the order has unsaved changes
+    dirty: false,
 
-    // ============================
-    // Create a new blank order
-    // ============================
+    // ★ PHP SAVE HOOK — saveCallback will call saveOrder() below
+    saveCallback: null,
+
+    // ★ Reference to the Save button so we can enable/disable it
+    saveButton: null,
+
+    updateSaveButton() {
+        if (this.saveButton) {
+            this.saveButton.disabled = !this.dirty;
+        }
+    },
+
     createBlankOrder() {
         return {
             orderNumber: "NEW-" + Date.now(),
             vendor: "",
             vendorOrderNumber: "",
-            orderDate: new Date().toISOString(),   // full timestamp
+            orderDate: new Date().toISOString(),
             paymentMethod: "",
             shippingMethod: "",
             trackingNumber: "",
@@ -24,9 +34,6 @@ export const order = {
         };
     },
 
-    // ============================
-    // Load order.json
-    // ============================
     async load() {
         const response = await fetch("./data/order.json");
         const data = await response.json();
@@ -58,7 +65,7 @@ export const order = {
                     itemName: row.itemName ?? "",
                     orderQty: Number(row.orderQty ?? 0),
                     pricePerUOM: Number(row.pricePerUOM ?? 0),
-                    received: row.received || "2045-12-31",
+                    received: row.received || "",
                     receivedQty: Number(row.receivedQty ?? 0),
                     discount: Number(row.discount ?? 0),
                     salesTax: Number(row.salesTax ?? 0),
@@ -72,9 +79,6 @@ export const order = {
         return this.orders;
     },
 
-    // ============================
-    // Render recent orders
-    // ============================
     renderRecent(container, mode = "open") {
         container.innerHTML = "";
 
@@ -87,6 +91,7 @@ export const order = {
 
         if (mode === "open") {
             filtered = filtered.filter(ord =>
+                ord.items.length === 0 ||
                 ord.items.some(it => !it.received || it.received > todayISO())
             );
         }
@@ -110,15 +115,14 @@ export const order = {
         });
     },
 
-    // ============================
-    // Render a single order
-    // ============================
     renderOrderDetails(ord) {
         const container = document.getElementById("order-details");
         const footerContainer = document.getElementById("order-footer-container");
 
         container.innerHTML = "";
         footerContainer.innerHTML = "";
+
+        const isClosed = this.isOrderClosed(ord);
 
         const header = document.createElement("div");
         header.className = "order-header";
@@ -127,13 +131,53 @@ export const order = {
 
         header.innerHTML = `
             <h2>Order ${ord.orderNumber}</h2>
-            <div><strong>Vendor:</strong> ${ord.vendor}</div>
-            <div><strong>Order Date:</strong> ${displayDate}</div>
-            <div><strong>Vendor Order #:</strong> ${ord.vendorOrderNumber}</div>
-            <div><strong>Payment:</strong> ${ord.paymentMethod}</div>
-            <div><strong>Shipping:</strong> ${ord.shippingMethod}</div>
-            <div><strong>Tracking:</strong> ${ord.trackingNumber}</div>
+
+            <div class="item-field">
+                <label>Vendor</label>
+                <input type="text" value="${ord.vendor}" ${isClosed ? "readonly" : ""}>
+            </div>
+
+            <div class="item-field">
+                <label>Order Date</label>
+                <input type="date" value="${displayDate}" ${isClosed ? "readonly" : ""}>
+            </div>
+
+            <div class="item-field">
+                <label>Vendor Order #</label>
+                <input type="text" value="${ord.vendorOrderNumber}" ${isClosed ? "readonly" : ""}>
+            </div>
+
+            <div class="item-field">
+                <label>Payment Method</label>
+                <input type="text" value="${ord.paymentMethod}" ${isClosed ? "readonly" : ""}>
+            </div>
+
+            <div class="item-field">
+                <label>Shipping Method</label>
+                <input type="text" value="${ord.shippingMethod}" ${isClosed ? "readonly" : ""}>
+            </div>
+
+            <div class="item-field">
+                <label>Tracking Number</label>
+                <input type="text" value="${ord.trackingNumber}" ${isClosed ? "readonly" : ""}>
+            </div>
         `;
+
+        if (!isClosed) {
+            const inputs = header.querySelectorAll("input");
+
+            const markDirty = () => {
+                this.dirty = true;
+                this.updateSaveButton();
+            };
+
+            inputs[0].addEventListener("change", () => { ord.vendor = inputs[0].value; markDirty(); });
+            inputs[1].addEventListener("change", () => { ord.orderDate = inputs[1].value; markDirty(); });
+            inputs[2].addEventListener("change", () => { ord.vendorOrderNumber = inputs[2].value; markDirty(); });
+            inputs[3].addEventListener("change", () => { ord.paymentMethod = inputs[3].value; markDirty(); });
+            inputs[4].addEventListener("change", () => { ord.shippingMethod = inputs[4].value; markDirty(); });
+            inputs[5].addEventListener("change", () => { ord.trackingNumber = inputs[5].value; markDirty(); });
+        }
 
         container.appendChild(header);
 
@@ -178,16 +222,30 @@ export const order = {
                 label.textContent = orderedItemLabels[field] ?? field;
 
                 const input = document.createElement("input");
-                input.type = "text";
-                input.value = numberFormat(item[field], fieldFormat[field]);
+                input.type = field === "received" ? "date" : "text";
+                input.value = field === "received"
+                    ? (item.received ? item.received.substring(0, 10) : "")
+                    : numberFormat(item[field], fieldFormat[field]);
+
+                if (isClosed) input.setAttribute("readonly", "");
 
                 input.addEventListener("change", () => {
-                    item[field] = input.value;
-
-                    // AUTOSAVE
-                    if (order.saveCallback) {
-                        order.saveCallback(ord);
+                    if (field === "received") {
+                        if (input.value > todayISO()) {
+                            this.showNotification("Received date must be today or in the past");
+                            input.value = "";
+                            item.received = "";
+                            return;
+                        }
+                        item.received = input.value;
+                    } else {
+                        item[field] = input.value;
                     }
+
+                    this.dirty = true;
+                    this.updateSaveButton();
+
+                    if (this.isOrderClosed(ord)) this.renderOrderDetails(ord);
                 });
 
                 wrapper.appendChild(label);
@@ -197,6 +255,85 @@ export const order = {
 
             itemsDiv.appendChild(row);
         });
+
+        if (!isClosed) {
+            const newRow = document.createElement("div");
+            newRow.className = "order-item-row";
+
+            const identity = document.createElement("div");
+            identity.className = "item-identity";
+            identity.textContent = "";
+            newRow.appendChild(identity);
+
+            const fields = [
+                { name: "itemName", label: "Item Name", type: "text", placeholder: "Enter item name" },
+                { name: "sku", label: "SKU", type: "text", placeholder: "SKU (optional)" },
+                { name: "orderQty", label: "Order Qty", type: "number", placeholder: "0" },
+                { name: "pricePerUOM", label: "Price per UOM", type: "number", placeholder: "0.00", step: "0.01" }
+            ];
+
+            const inputs = {};
+
+            fields.forEach(f => {
+                const wrapper = document.createElement("div");
+                wrapper.className = "item-field";
+
+                const label = document.createElement("label");
+                label.textContent = f.label;
+
+                const input = document.createElement("input");
+                input.type = f.type;
+                input.placeholder = f.placeholder;
+                if (f.step) input.step = f.step;
+
+                input.addEventListener("input", () => {
+                    identity.textContent = inputs.itemName.value.trim();
+                });
+
+                inputs[f.name] = input;
+
+                wrapper.appendChild(label);
+                wrapper.appendChild(input);
+                newRow.appendChild(wrapper);
+            });
+
+            const addBtn = document.createElement("button");
+            addBtn.textContent = "Add Item";
+            addBtn.className = "add-item-btn";
+
+            addBtn.addEventListener("click", () => {
+                const name = inputs.itemName.value.trim();
+                const sku = inputs.sku.value.trim();
+                const qty = Number(inputs.orderQty.value);
+                const price = Number(inputs.pricePerUOM.value);
+
+                if (!name || qty <= 0 || price <= 0) {
+                    this.showNotification("Item Name, Qty, and Price are required");
+                    return;
+                }
+
+                ord.items.push({
+                    sku,
+                    itemName: name,
+                    orderQty: qty,
+                    pricePerUOM: price,
+                    received: "",
+                    receivedQty: 0,
+                    discount: 0,
+                    salesTax: 0,
+                    orderPrice: qty * price,
+                    receivedPrice: 0
+                });
+
+                this.dirty = true;
+                this.updateSaveButton();
+
+                this.renderOrderDetails(ord);
+            });
+
+            newRow.appendChild(addBtn);
+            itemsDiv.appendChild(newRow);
+        }
 
         container.appendChild(itemsDiv);
 
@@ -211,9 +348,8 @@ export const order = {
         const taxTotal = subtotal * taxRate;
         const orderTotal = subtotal + taxTotal + shipping;
 
-        // Compute global open orders total
         const openOrdersTotal = this.orders
-            .filter(o => o.items.some(it => !it.received || it.received > todayISO()))
+            .filter(o => o.items.length === 0 || o.items.some(it => !it.received || it.received > todayISO()))
             .reduce((sum, o) => {
                 return sum + o.items.reduce((s, it) => s + Number(it.orderPrice || 0), 0);
             }, 0);
@@ -252,6 +388,97 @@ export const order = {
             </div>
         `;
 
+        // ★ Always show Save button, but disable unless dirty
+        const saveBtn = document.createElement("button");
+        saveBtn.textContent = "Save Order";
+        saveBtn.className = "save-order-btn";
+        saveBtn.disabled = !this.dirty;
+
+        saveBtn.addEventListener("click", () => {
+            this.saveCallback?.(ord);
+            this.dirty = false;
+            this.updateSaveButton();
+            this.showNotification("Saved");
+        });
+
+        footer.appendChild(saveBtn);
+        this.saveButton = saveBtn;
+
         footerContainer.appendChild(footer);
+    },
+
+    isOrderClosed(ord) {
+        if (ord.items.length === 0) return false;
+
+        return ord.items.every(it =>
+            it.received &&
+            it.received <= todayISO()
+        );
+    },
+
+    showNotification(msg) {
+        const note = document.createElement("div");
+        note.className = "notification";
+        note.textContent = msg;
+
+        document.body.appendChild(note);
+
+        setTimeout(() => {
+            note.style.opacity = "0";
+            setTimeout(() => note.remove(), 500);
+        }, 2000);
     }
 };
+
+// ============================
+// ★ PHP SAVE HOOK — real persistence
+// ============================
+
+async function saveOrder(ord) {
+    try {
+        console.log("➡️ JS: Sending order to PHP:", ord);
+        console.log("ORD BEFORE STRINGIFY:", JSON.stringify(ord, null, 2));
+
+        const response = await fetch("/grocerylist/php/saveOrder.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(ord)
+        });
+
+        const raw = await response.text();
+        console.log("⬅️ JS: Raw PHP response:", raw);
+
+        try {
+            const parsed = JSON.parse(raw);
+            console.log("⬅️ JS: Parsed JSON:", parsed);
+        } catch (e) {
+            console.error("❌ JS: Could not parse JSON:", e);
+        }
+
+    } catch (err) {
+        console.error("❌ JS: Fetch failed:", err);
+    }
+}
+
+order.saveCallback = saveOrder;
+
+// ============================
+// FOOTER AUTO-HIDE ON SCROLL
+// ============================
+
+let lastScroll = 0;
+
+window.addEventListener("scroll", () => {
+    const footer = document.querySelector(".order-footer");
+    if (!footer) return;
+
+    const current = window.scrollY;
+
+    if (current > lastScroll) {
+        footer.classList.add("footer-hidden");
+    } else {
+        footer.classList.remove("footer-hidden");
+    }
+
+    lastScroll = current;
+});

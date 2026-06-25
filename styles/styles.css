@@ -10,7 +10,6 @@ body {
 }
 
 button {
-    cursor: pointer;
     width: 100%;
 }
 
@@ -42,6 +41,60 @@ textarea {
     box-sizing: border-box;
     margin: 5px 0;
 }
+
+/* ============================
+   Orders Page Layout (RESTORES LEFT/RIGHT COLUMNS)
+============================ */
+#orders-layout {
+    overflow: auto; /* clears floats so columns work */
+}
+
+#recent-orders {
+    float: left;
+    width: 30%;
+    padding-right: 20px;
+    border-right: 1px solid #ccc;
+}
+
+#order-details {
+    float: left;
+    width: 70%;
+    padding-left: 20px;
+}
+
+.toggle-btn {
+    margin-top: 10px;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+}
+
+/* ============================
+   Order Header (MATCH ITEM FIELDS)
+============================ */
+.order-header {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px 20px;
+    margin-bottom: 20px;
+    padding: 10px 0;
+}
+
+    .order-header .item-field {
+        display: flex;
+        flex-direction: column;
+    }
+
+        .order-header .item-field label {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .order-header .item-field input {
+            padding: 6px 8px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
 
 /* ============================
    Responsive
@@ -117,9 +170,9 @@ th, td {
    Override totals INSIDE footer
 ============================ */
 .order-footer .total {
-    font-size: 1rem; /* match normal text */
-    font-weight: 600; /* subtle emphasis */
-    color: inherit; /* remove dark blue */
+    font-size: 1rem;
+    font-weight: 600;
+    color: inherit;
 }
 
 /* ============================
@@ -163,7 +216,6 @@ th, td {
     }
 
     .recent-table tr {
-        cursor: pointer;
         transition: background-color 0.12s ease;
     }
 
@@ -192,26 +244,6 @@ th, td {
 }
 
 /* ============================
-   Two-Column Layout
-============================ */
-#recent-orders {
-    float: left;
-    width: 30%;
-    padding-right: 20px;
-    border-right: 1px solid #ccc;
-}
-
-#order-details {
-    float: left;
-    width: 70%;
-    padding-left: 20px;
-}
-
-.order-items {
-    padding-bottom: 6rem;
-}
-
-/* ============================
    Item Row Borders
 ============================ */
 .order-item-row {
@@ -234,6 +266,7 @@ th, td {
     border-top: 1px solid #ccc;
     box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
     z-index: 10;
+    transform: translateY(0);
 }
 
 .footer-row {
@@ -246,4 +279,49 @@ th, td {
         font-weight: bold;
         border-top: 1px solid #aaa;
         padding-top: 0.5rem;
+    }
+.footer-hidden {
+    transform: translateY(100%);
+    transition: transform 0.25s ease;
+}
+
+/* ============================
+   Mobile Toast Notification
+============================ */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    opacity: 0.95;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+}
+
+/* Save Order button */
+.save-order-btn {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background: #0078d4; /* Microsoft blue */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+    /* Hover only when enabled */
+    .save-order-btn:not(:disabled):hover {
+        background: #005fa3;
+    }
+
+    /* Disabled state */
+    .save-order-btn:disabled {
+        background: #cccccc;
+        opacity: 0.6;
     }

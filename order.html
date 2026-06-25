@@ -5,32 +5,8 @@
     <title>Orders</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <!-- External stylesheet only -->
     <link rel="stylesheet" href="./styles/styles.css">
-
-    <style>
-        #orders-layout {
-            display: flex;
-            flex-direction: row;
-            gap: 20px;
-            align-items: flex-start;
-        }
-
-        #recent-orders {
-            width: 250px;
-            flex-shrink: 0;
-        }
-
-        #order-details {
-            flex: 1;
-        }
-
-        .toggle-btn {
-            margin-top: 10px;
-            padding: 6px 10px;
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-    </style>
 </head>
 
 <body>
@@ -54,27 +30,8 @@
 
         <!-- Order Details -->
         <section id="order-details">
-            <h2>Order Details</h2>
-
-            <div class="order-header">
-                <label>Order # <input type="text" name="orderNumber" readonly></label>
-                <label>Vendor <input type="text" name="vendor"></label>
-                <label>Vendor Order # <input type="text" name="vendorOrderNumber"></label>
-
-                <!-- DATE INPUT (patched for ISO timestamps) -->
-                <label>Order Date <input type="date" name="orderDate"></label>
-
-                <label>Payment Method <input type="text" name="paymentMethod"></label>
-                <label>Shipping Method <input type="text" name="shippingMethod"></label>
-                <label>Tracking Number <input type="text" name="trackingNumber"></label>
-                <label>Order Type <input type="text" name="orderType" readonly></label>
-            </div>
-
-            <h3>Items</h3>
-            <div id="order-items-container">
-                <p class="recent-loading">Select an order to view items.</p>
-            </div>
-
+            <!-- JS will render the header + items here -->
+            <h2>Select an order</h2>
         </section>
 
     </div>
