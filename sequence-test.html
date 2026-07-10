@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Sequence Test</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+        #value {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Order Sequence Test</h1>
+
+    <div id="value">Loading…</div>
+
+    <button id="incBtn">Increment Sequence</button>
+
+    <script>
+async function loadSequence() {
+    const res = await fetch("/grocerylist/php/getSequence.php");
+    const data = await res.json();
+    document.getElementById("value").textContent =
+        "Current sequence: " + data.lastOrderNumber;
+}
+
+async function incrementSequence() {
+    const res = await fetch("/grocerylist/php/incrementSequence.php");
+    const data = await res.json();
+    document.getElementById("value").textContent =
+        "Current sequence: " + data.nextOrderNumber;
+}
+
+document.getElementById("incBtn").addEventListener("click", incrementSequence);
+
+loadSequence();
+    </script>
+
+</body>
+</html>

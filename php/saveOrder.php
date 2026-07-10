@@ -1,119 +1,49 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-file_put_contents(__DIR__ . "/php_is_running.txt", "YES");
+header('Content-Type: application/json');
 
-// =======================================================
-// DEBUG LOGGING (ALWAYS VISIBLE IN FILEZILLA)
-// =======================================================
-
-// This writes to: /public_html/grocerylist/php/debug.log
-// You WILL see this file in FileZilla.
-$debugFile = __DIR__ . "/debug.log";
-
-function dbg($msg) {
-    global $debugFile;
-    $timestamp = date("Y-m-d H:i:s");
-    error_log("[$timestamp] $msg\n", 3, $debugFile);
-}
-
-dbg("=== saveOrder.php invoked ===");
-
-
-// =======================================================
-// READ RAW INPUT
-// =======================================================
-
-$input = file_get_contents("php://input");
-dbg("Raw input: " . $input);
-
-
-// =======================================================
-// DECODE JSON
-// =======================================================
-
+$input = file_get_contents('php://input');
 $order = json_decode($input, true);
 
-if (!$order) {
-    dbg("ERROR: JSON decode failed");
-    echo json_encode(["status" => "error", "message" => "Invalid JSON"]);
+if (!$order || !isset($order['orderNumber'])) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid order data']);
     exit;
 }
 
-dbg("Decoded orderNumber: " . $order["orderNumber"]);
+$filename = '../data/order.json';
 
-
-// =======================================================
-// PREPARE FILE PATH
-// =======================================================
-
-$filename = __DIR__ . "/../data/order.json";
-dbg("Target file: " . $filename);
-
-
-// =======================================================
-// LOAD EXISTING DATA
-// =======================================================
-
-$existing = [];
+error_log("=== Save attempt for order " . $order['orderNumber'] . " ===");
 
 if (file_exists($filename)) {
-    $json = file_get_contents($filename);
-    dbg("Existing file contents length: " . strlen($json));
-
-    $existing = json_decode($json, true);
-
-    if (!is_array($existing)) {
-        dbg("WARNING: existing file was not valid JSON, resetting to empty array");
-        $existing = [];
-    }
+    $jsonContent = file_get_contents($filename);
+    $allOrders = json_decode($jsonContent, true) ?: [];
 } else {
-    dbg("No existing file found — creating new one");
+    $allOrders = [];
 }
 
-
-// =======================================================
-// UPDATE OR APPEND ORDER
-// =======================================================
-
 $found = false;
-
-foreach ($existing as &$row) {
-    if ($row["orderNumber"] === $order["orderNumber"]) {
-        dbg("Updating existing order: " . $order["orderNumber"]);
-        $row = $order;
+foreach ($allOrders as &$existing) {
+    if ((string)$existing['orderNumber'] === (string)$order['orderNumber']) {
+        $existing = $order;
         $found = true;
         break;
     }
 }
 
 if (!$found) {
-    dbg("Appending new order: " . $order["orderNumber"]);
-    $existing[] = $order;
+    $allOrders[] = $order;
 }
 
+$encoded = json_encode($allOrders, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
-// =======================================================
-// WRITE FILE
-// =======================================================
-
-$encoded = json_encode($existing, JSON_PRETTY_PRINT);
-
-if (file_put_contents($filename, $encoded) === false) {
-    dbg("ERROR: Failed to write file");
-    echo json_encode(["status" => "error", "message" => "File write failed"]);
-    exit;
+if (file_put_contents($filename, $encoded)) {
+    echo json_encode(['status' => 'success', 'orderNumber' => $order['orderNumber']]);
+} else {
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => 'Write failed. Check path and permissions.']);
 }
-
-dbg("SUCCESS: File written");
-
-
-// =======================================================
-// SEND RESPONSE
-// =======================================================
-
-$response = ["status" => "ok", "orderNumber" => $order["orderNumber"]];
-dbg("Response sent: " . json_encode($response));
-
-echo json_encode($response);
-
 ?>

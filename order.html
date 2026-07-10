@@ -1,94 +1,92 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Orders</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- External stylesheet only -->
-    <link rel="stylesheet" href="./styles/styles.css">
+    <title>Order</title>
+    <link rel="stylesheet" href="styles/styles.css">
 </head>
-
 <body>
-
-    <h1>Orders</h1>
 
     <div id="orders-layout">
 
-        <!-- Recent Orders Sidebar -->
-        <section id="recent-orders">
-            <h2>Recent Orders</h2>
+        <!-- LEFT: Recent Orders -->
+        <div id="recent-orders">
+            <button onclick="newOrder()" style="width:100%; margin-bottom:12px; padding:10px;">
+                + New Order
+            </button>
+            <h3>Recent Orders</h3>
+            <ul id="recentOrdersList"></ul>
+        </div>
 
-            <button id="new-order-btn" class="toggle-btn">New Order</button>
+        <!-- RIGHT: Order Form -->
+        <div id="order-details">
+            <h2>Order Details</h2>
 
-            <div id="recent-orders-container">
-                <p class="recent-loading">Loading recent orders…</p>
+            <div class="order-header">
+                <div class="item-field">
+                    <label>Order #</label>
+                    <input id="orderNumber" disabled>
+                </div>
+                <div class="item-field">
+                    <label>Vendor</label>
+                    <input id="vendor" tabindex="1" onchange="onFieldChange('vendor', this.value)">
+                </div>
+                <div class="item-field">
+                    <label>Type</label>
+                    <input id="orderType" tabindex="2" onchange="onFieldChange('orderType', this.value)">
+                </div>
+                <div class="item-field">
+                    <label>Date</label>
+                    <input id="orderDate" type="date" tabindex="3" onchange="onFieldChange('orderDate', this.value)">
+                </div>
+                <div class="item-field">
+                    <label>Vendor Order #</label>
+                    <input id="vendorOrderNumber" tabindex="4" onchange="onFieldChange('vendorOrderNumber', this.value)">
+                </div>
+                <div class="item-field">
+                    <label>Payment Method</label>
+                    <input id="paymentMethod" tabindex="5" onchange="onFieldChange('paymentMethod', this.value)">
+                </div>
+                <div class="item-field">
+                    <label>Shipping Method</label>
+                    <input id="shippingMethod" tabindex="6" onchange="onFieldChange('shippingMethod', this.value)">
+                </div>
+                <div class="item-field">
+                    <label>Tracking Number</label>
+                    <input id="trackingNumber" tabindex="7" onchange="onFieldChange('trackingNumber', this.value)">
+                </div>
             </div>
 
-            <button id="toggle-open-all" class="toggle-btn">Show All Orders</button>
-        </section>
+            <h3>Items</h3>
+            <div id="itemsBody" class="items-container"></div>
 
-        <!-- Order Details -->
-        <section id="order-details">
-            <!-- JS will render the header + items here -->
-            <h2>Select an order</h2>
-        </section>
+            <!-- FOOTER -->
+            <div id="order-footer-container">
+                <div class="footer-title">Order Summary</div>
 
+                <div class="footer-row">
+                    <span>Order Total</span>
+                    <span id="orderTotal">$0.00</span>
+                </div>
+                <div class="footer-row">
+                    <span>Open Orders Total</span>
+                    <span id="openOrdersTotal">$0.00</span>
+                </div>
+
+                <hr>
+
+                <div class="footer-row" style="margin-top:12px;">
+                    <button id="saveOrderBtn" onclick="saveOrder()" style="padding:12px 24px; font-size:16px;">
+                        💾 Save Order
+                    </button>
+                    <small style="color:#666; align-self:center; margin-left:12px;">
+                        (Changes also autosave after ~2.5 seconds)
+                    </small>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div id="order-footer-container"></div>
-
-    <script type="module">
-        import { order } from "./js/order.js";
-
-        let showAll = false;
-
-        // AUTOSAVE CALLBACK
-        function saveOrder(ord) {
-            console.log("Autosaving order:", ord.orderNumber, ord);
-            // Later: POST to server or write to file
-        }
-
-        order.saveCallback = saveOrder;
-
-        // CREATE NEW ORDER
-        document.getElementById("new-order-btn")
-            .addEventListener("click", () => {
-                const newOrder = order.createBlankOrder();
-                order.orders.unshift(newOrder);
-
-                const listContainer = document.getElementById("recent-orders-container");
-                order.renderRecent(listContainer, showAll ? "all" : "open");
-
-                order.renderOrderDetails(newOrder);
-
-                if (order.saveCallback) order.saveCallback(newOrder);
-            });
-
-        // TOGGLE OPEN/ALL
-        const toggleBtn = document.getElementById("toggle-open-all");
-
-        toggleBtn.addEventListener("click", () => {
-            showAll = !showAll;
-            toggleBtn.textContent = showAll ? "Show Only Open" : "Show All Orders";
-
-            const listContainer = document.getElementById("recent-orders-container");
-            order.renderRecent(listContainer, showAll ? "all" : "open");
-
-            const first = listContainer.querySelector(".recent-order");
-            if (first) first.click();
-        });
-
-        // INITIAL LOAD
-        order.load().then(() => {
-            const listContainer = document.getElementById("recent-orders-container");
-
-            order.renderRecent(listContainer, "open");
-
-            const first = listContainer.querySelector(".recent-order");
-            if (first) first.click();
-        });
-    </script>
-
+    <script src="js/order.js"></script>
 </body>
 </html>

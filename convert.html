@@ -1,0 +1,119 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CSV → JSON Order Converter</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 2rem;
+        }
+
+        #progress {
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+
+        pre {
+            background: #f0f0f0;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>CSV → JSON Order Converter</h2>
+
+    <input type="file" id="csvFile" accept=".csv">
+    <button onclick="loadAndConvert()">Convert</button>
+
+    <div id="progress"></div>
+
+    <h3>Output JSON</h3>
+<pre id="output"></pre>
+
+    <script>
+        function loadAndConvert() {
+            const fileInput = document.getElementById('csvFile');
+            const progress = document.getElementById('progress');
+
+            if (!fileInput.files.length) {
+                progress.textContent = "No file selected.";
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const csv = e.target.result.trim();
+                convert(csv);
+            };
+
+            reader.readAsText(file);
+        }
+
+        function convert(csv) {
+            const progress = document.getElementById('progress');
+            const lines = csv.split(/\r?\n/);
+
+            const headers = lines[0].split(',').map(h => h.trim());
+            const totalRows = lines.length - 1;
+
+            const rows = [];
+            for (let i = 1; i < lines.length; i++) {
+                progress.textContent = `Processing row ${i} of ${totalRows}…`;
+
+                const cols = lines[i].split(',').map(c => c.trim());
+                const obj = {};
+                headers.forEach((h, idx) => obj[h] = cols[idx]);
+                rows.push(obj);
+            }
+
+            const orders = {};
+
+            rows.forEach(row => {
+                const orderNumber = row.orderNumber;
+
+                if (!orders[orderNumber]) {
+                    orders[orderNumber] = {
+                        orderNumber: Number(orderNumber),
+                        orderDate: row.orderDate || "",
+                        vendor: row.vendor || "",
+                        vendorOrderNumber: row.vendorOrderNumber || "",
+                        paymentMethod: row.paymentMethod || "",
+                        shippingMethod: row.shippingMethod || "",
+                        trackingNumber: row.trackingNumber || "",
+                        items: []
+                    };
+                }
+
+                const item = {
+                    itemName: row.itemName || "",
+                    sku: row.sku || "",
+                    orderQty: row.orderQty || "",
+                    pricePerUOM: row.pricePerUOM || "",
+                    orderPrice: Number(row.orderPrice || 0),
+                    receivedPrice: Number(row.receivedPrice || 0),
+                    snapYes: row.snapYes || "",
+                    discount: row.discount || "",
+                    salesTax: row.salesTax || "",
+                    received: row.received || "",
+                    receivedQty: row.receivedQty || ""
+                };
+
+                if (item.itemName.trim() !== "") {
+                    orders[orderNumber].items.push(item);
+                }
+            });
+
+            progress.textContent = "Processing complete.";
+
+            const result = Object.values(orders);
+            document.getElementById('output').textContent =
+                JSON.stringify(result, null, 2);
+        }
+    </script>
+
+</body>
+</html>

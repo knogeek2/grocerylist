@@ -1,82 +1,104 @@
 ﻿/* ============================
-   Base Layout
+   GLOBAL PAGE FORMATTING
 ============================ */
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    font-size: 16px;
+    line-height: 1.4;
+    background: #fdfdfd;
+    color: #222;
+    height: 100%;
+    overflow-y: auto;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 20px;
-    background: #fafafa;
+    padding: 10px;
 }
 
-button {
-    width: 100%;
+h2, h3 {
+    margin-top: 0;
+    font-weight: 600;
 }
 
-.form-row {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 1rem;
-}
-
-input, select, button {
-    margin: 5px;
-    padding: 0.5rem;
-    font-size: 1rem;
-}
-
-label {
-    font-weight: bold;
-    margin-bottom: 0.25rem;
-}
-
-textarea {
-    width: 100%;
-    min-height: 180px;
-    padding: 0.5rem;
-    font-family: monospace;
-    font-size: 0.95rem;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+input, button {
+    font-family: inherit;
+    font-size: 16px;
     box-sizing: border-box;
-    margin: 5px 0;
 }
+
+/* Buttons */
+button {
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid #888;
+    background: #eee;
+    cursor: pointer;
+}
+
+    button:hover {
+        background: #e0e0e0;
+    }
 
 /* ============================
-   Orders Page Layout (RESTORES LEFT/RIGHT COLUMNS)
+   TWO-PANE LAYOUT
 ============================ */
+
 #orders-layout {
-    overflow: auto; /* clears floats so columns work */
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 20px;
+    min-height: calc(100vh - 20px);
 }
 
 #recent-orders {
-    float: left;
-    width: 30%;
-    padding-right: 20px;
+    flex: 0 0 28%;
+    max-width: 28%;
+    min-width: 260px;
     border-right: 1px solid #ccc;
+    padding-right: 20px;
+    overflow-y: auto;
+    max-height: 100vh;
 }
 
 #order-details {
-    float: left;
-    width: 70%;
+    flex: 1;
+    min-width: 0;
     padding-left: 20px;
-}
-
-.toggle-btn {
-    margin-top: 10px;
-    padding: 6px 10px;
-    font-size: 0.9rem;
+    overflow-y: auto;
 }
 
 /* ============================
-   Order Header (MATCH ITEM FIELDS)
+   MOBILE BEHAVIOR
 ============================ */
+
+@media (max-width: 600px) {
+    #orders-layout {
+        flex-direction: column;
+    }
+
+    #recent-orders,
+    #order-details {
+        flex: none;
+        max-width: 100%;
+        width: 100%;
+        padding: 0;
+        border: none;
+    }
+}
+
+/* ============================
+   ORDER HEADER FIELDS
+============================ */
+
 .order-header {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 16px 20px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
     margin-bottom: 20px;
-    padding: 10px 0;
 }
 
     .order-header .item-field {
@@ -84,244 +106,149 @@ textarea {
         flex-direction: column;
     }
 
-        .order-header .item-field label {
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-
-        .order-header .item-field input {
-            padding: 6px 8px;
-            font-size: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-
-/* ============================
-   Responsive
-============================ */
-@media (max-width: 600px) {
-    body {
-        padding: 10px;
+    .order-header label {
+        font-weight: bold;
+        margin-bottom: 4px;
     }
 
-    table th, table td {
-        font-size: 0.9rem;
-        padding: 0.4rem;
+    .order-header input {
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
     }
 
-    #recent-orders,
-    #order-details {
-        float: none;
-        width: 100%;
-        padding: 0;
-        border: none;
-    }
-
-    .order-footer {
-        padding: 0.5rem;
-    }
-
-    .footer-row {
-        grid-template-columns: 1fr auto auto;
-        font-size: 0.9rem;
-    }
-}
-
 /* ============================
-   Sections
+   ITEM ROWS — STACKED WITH LABELS
 ============================ */
-.section {
-    border-top: 1px solid #ddd;
-    margin-top: 2rem;
-    padding-top: 1rem;
-}
 
-/* ============================
-   Tables
-============================ */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background: white;
-}
-
-.table-wrapper {
-    overflow-x: auto;
-}
-
-th, td {
-    border: 1px solid #ccc;
-    padding: 0.5rem;
-    text-align: left;
-}
-
-/* ============================
-   Totals (GLOBAL)
-============================ */
-.total {
-    font-size: 1.4em;
-    font-weight: bold;
-    margin-top: 15px;
-    color: #2c3e50;
-}
-
-/* ============================
-   Override totals INSIDE footer
-============================ */
-.order-footer .total {
-    font-size: 1rem;
-    font-weight: 600;
-    color: inherit;
-}
-
-/* ============================
-   Recent Orders
-============================ */
-.recent-orders-section {
-    margin: 2rem 0;
-    padding: 1.5rem;
+.order-item-row {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    margin-bottom: 16px;
     border: 1px solid #ddd;
     border-radius: 8px;
-    background: #f9f9f9;
+    background: #fafafa;
 }
 
-    .recent-orders-section h3 {
-        margin-top: 0;
-        color: #333;
-    }
-
-.recent-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    font-size: 0.95rem;
-}
-
-    .recent-table th,
-    .recent-table td {
-        padding: 10px 12px;
-        text-align: left;
-        border-bottom: 1px solid #eee;
-    }
-
-    .recent-table th {
-        background: #f0f0f0;
+    .order-item-row label {
         font-weight: bold;
-        border-bottom: 2px solid #ccc;
+        margin-top: 12px;
+        margin-bottom: 4px;
     }
 
-    .recent-table td.order-number {
-        font-weight: 600;
-    }
-
-    .recent-table tr {
-        transition: background-color 0.12s ease;
-    }
-
-        .recent-table tr:hover {
-            background-color: #f0f8ff;
+        .order-item-row label:first-of-type {
+            margin-top: 0;
         }
 
-    .recent-table .items-count {
-        text-align: right;
-        color: #555;
+    .order-item-row input {
+        padding: 8px 10px;
+        font-size: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
     }
 
-    .recent-table tr.selected {
-        background-color: #e6f3ff;
-        font-weight: bold;
+    .order-item-row button {
+        margin-top: 12px;
+        padding: 10px 16px;
+        background: #ff4444;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        align-self: flex-start;
     }
 
-.recent-loading,
-.recent-error {
-    color: #666;
-    font-style: italic;
-}
-
-.recent-error {
-    color: #c0392b;
-}
+        .order-item-row button:hover {
+            background: #cc0000;
+        }
 
 /* ============================
-   Item Row Borders
+   RECENT ORDERS LIST
 ============================ */
-.order-item-row {
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #ccc;
+
+#recentOrdersList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
-    .order-item-row:last-child {
-        border-bottom: none;
+    #recentOrdersList li {
+        padding: 8px 10px;
+        border-bottom: 1px solid #ddd;
+        cursor: pointer;
     }
 
+        #recentOrdersList li:hover {
+            background: #f0f0f0;
+        }
+
+        #recentOrdersList li.selected {
+            background: #d0e4ff;
+            font-weight: bold;
+        }
+
 /* ============================
-   Sticky Footer
+   SAVED ORDER TOAST NOTIFICATION
 ============================ */
-.order-footer {
+#save-toast {
     position: fixed;
-    bottom: 0;
-    background: #fff;
-    padding: 0.75rem;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 6px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 9999;
+}
+
+/* ============================
+   FOOTER — ORDER TOTALS
+============================ */
+
+#order-footer-container {
+    margin-top: 25px;
+    padding: 18px;
     border-top: 1px solid #ccc;
-    box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
-    z-index: 10;
-    transform: translateY(0);
+    background: #f7f7f7;
+    border-radius: 6px;
+}
+
+.footer-title {
+    font-weight: bold;
+    font-size: 17px;
+    margin-bottom: 12px;
 }
 
 .footer-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    margin: 0.25rem 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 15px;
 }
 
     .footer-row.total {
         font-weight: bold;
-        border-top: 1px solid #aaa;
-        padding-top: 0.5rem;
+        font-size: 16px;
     }
-.footer-hidden {
-    transform: translateY(100%);
-    transition: transform 0.25s ease;
+
+#order-footer-container {
+    position: sticky;
+    bottom: 0;
+    background: #f7f7f7;
+    z-index: 10;
 }
 
-/* ============================
-   Mobile Toast Notification
-============================ */
-.notification {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #333;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    opacity: 0.95;
-    z-index: 9999;
-    transition: opacity 0.5s ease;
-}
 
-/* Save Order button */
-.save-order-btn {
-    margin-top: 15px;
-    padding: 10px 20px;
-    background: #0078d4; /* Microsoft blue */
-    color: white;
+#order-footer-container hr {
+    margin: 12px 0;
     border: none;
-    border-radius: 4px;
-    font-size: 1rem;
-    transition: background 0.2s ease, opacity 0.2s ease;
+    border-top: 1px solid #ccc;
 }
 
-    /* Hover only when enabled */
-    .save-order-btn:not(:disabled):hover {
-        background: #005fa3;
-    }
-
-    /* Disabled state */
-    .save-order-btn:disabled {
-        background: #cccccc;
-        opacity: 0.6;
-    }
+small {
+    color: #666;
+}
