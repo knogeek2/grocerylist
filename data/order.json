@@ -352,7 +352,7 @@
         ]
     },
     {
-        "orderNumber": 1783699858144,
+        "orderNumber": 739,
         "vendor": "Cuisinart",
         "orderType": "Order",
         "orderDate": "2026-07-04",
@@ -362,11 +362,11 @@
         "trackingNumber": "",
         "items": [
             {
-                "sku": "",
-                "itemName": "",
+                "sku": "500899",
+                "itemName": "CUIS-DGB550-BASKET",
                 "snapYes": 0,
-                "orderQty": 0,
-                "pricePerUOM": 0,
+                "orderQty": 1,
+                "pricePerUOM": 11.95,
                 "discount": 0,
                 "salesTax": 0,
                 "received": "",
@@ -376,5 +376,16 @@
             }
         ],
         "status": "New"
+    },
+    {
+        "orderNumber": 740,
+        "vendor": "Kroger, West Cary Street",
+        "orderType": "Order",
+        "orderDate": "2026-07-11",
+        "vendorOrderNumber": "",
+        "paymentMethod": "SNAP 0834",
+        "shippingMethod": "oldmanwalking",
+        "trackingNumber": "",
+        "items": []
     }
 ]
