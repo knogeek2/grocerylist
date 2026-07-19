@@ -29,7 +29,10 @@
                 </div>
                 <div class="item-field">
                     <label>Vendor</label>
-                    <input id="vendor" tabindex="1" onchange="onFieldChange('vendor', this.value)">
+                    <input id="vendor" list="vendorList" tabindex="1"
+                           oninput="filterVendorList(this.value)"
+                           onchange="onVendorSelected(this.value)">
+                    <datalist id="vendorList"></datalist>
                 </div>
                 <div class="item-field">
                     <label>Type</label>
@@ -54,6 +57,11 @@
                 <div class="item-field">
                     <label>Tracking Number</label>
                     <input id="trackingNumber" tabindex="7" onchange="onFieldChange('trackingNumber', this.value)">
+                </div>
+                <div class="item-field">
+                    <label>Order Sales Tax</label>
+                    <input id="hSalesTax" type="number" step="0.01" value="0.00"
+                           onchange="onFieldChange('hSalesTax', parseFloat(this.value) || 0)">
                 </div>
             </div>
 
