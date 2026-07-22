@@ -1,4 +1,4 @@
-﻿// order.js - Updated with hSalesTax and dSalesTax
+﻿// order.js - Updated with Order Status + Note field
 
 let currentOrder = null;
 let isDirty = false;
@@ -54,7 +54,25 @@ async function onVendorSelected(value) {
     populateVendorDatalist();
 }
 
-//Load Recent Orders
+// Compute Order Status
+function getOrderStatus(order) {
+    if (!order || !order.items || order.items.length === 0) return "New";
+
+    const hasOnlyBlank = order.items.length === 1 &&
+        (!order.items[0].sku || order.items[0].sku.trim() === "") &&
+        (!order.items[0].itemName || order.items[0].itemName.trim() === "");
+
+    if (hasOnlyBlank) return "New";
+
+    const allReceived = order.items.every(item =>
+        item.received && item.received.trim() !== "" &&
+        parseFloat(item.receivedQty || 0) > 0
+    );
+
+    return allReceived ? "Closed" : "Open";
+}
+
+// Load Recent Orders
 async function loadRecentOrders() {
     try {
         const response = await fetch("data/order.json");
@@ -81,7 +99,6 @@ async function loadRecentOrders() {
     }
 }
 
-// Autosave & Status
 function triggerAutosave() {
     if (autosaveTimeout) clearTimeout(autosaveTimeout);
     autosaveTimeout = setTimeout(async () => {
@@ -108,7 +125,7 @@ function showSaveStatus(message, isError = false) {
     setTimeout(() => { if (statusEl) statusEl.textContent = ""; }, 2000);
 }
 
-// Core Functions
+// Core Load
 async function loadOrder(orderNumber) {
     if (!await maybeSaveBeforeRecordChange()) return;
 
@@ -122,13 +139,14 @@ async function loadOrder(orderNumber) {
 
     document.getElementById("orderNumber").value = currentOrder.orderNumber || "";
     document.getElementById("vendor").value = currentOrder.vendor || "";
-    document.getElementById("orderType").value = currentOrder.orderType || "";
+    document.getElementById("orderStatus").value = getOrderStatus(currentOrder);
     document.getElementById("orderDate").value = currentOrder.orderDate || "";
     document.getElementById("vendorOrderNumber").value = currentOrder.vendorOrderNumber || "";
     document.getElementById("paymentMethod").value = currentOrder.paymentMethod || "";
     document.getElementById("shippingMethod").value = currentOrder.shippingMethod || "";
     document.getElementById("trackingNumber").value = currentOrder.trackingNumber || "";
     document.getElementById("hSalesTax").value = currentOrder.hSalesTax || 0;
+    document.getElementById("orderNote").value = currentOrder.note || "";
 
     renderAllItems();
     isDirty = false;
@@ -141,7 +159,8 @@ function renderAllItems() {
     if (!container) return;
     container.innerHTML = "";
 
-    const isClosed = isOrderClosed(currentOrder);
+    const status = getOrderStatus(currentOrder);
+    const isClosed = status === "Closed";
 
     if (currentOrder && currentOrder.items) {
         currentOrder.items.forEach((item, index) => {
@@ -209,7 +228,7 @@ function createItemRow(index, item, isClosed = false) {
 
 function addNewItem() {
     if (!currentOrder) return;
-    if (isOrderClosed(currentOrder)) return;
+    if (getOrderStatus(currentOrder) === "Closed") return;
 
     if (!currentOrder.items) currentOrder.items = [];
 
@@ -225,14 +244,14 @@ function addNewItem() {
 }
 
 function onFieldChange(field, value) {
-    if (isOrderClosed(currentOrder)) return;
+    if (getOrderStatus(currentOrder) === "Closed") return;
     currentOrder[field] = value;
     isDirty = true;
     triggerAutosave();
 }
 
 function onItemChange(index, field, value) {
-    if (isOrderClosed(currentOrder)) return;
+    if (getOrderStatus(currentOrder) === "Closed") return;
     currentOrder.items[index][field] = value;
     isDirty = true;
     triggerAutosave();
@@ -247,11 +266,6 @@ function recalcItem(item) {
     item.orderPrice = (qty * price) - discount + tax;
     const rQty = parseFloat(item.receivedQty) || 0;
     item.receivedPrice = (rQty * price) - discount + tax;
-}
-
-function isOrderClosed(order) {
-    if (!order || !order.items || order.items.length === 0) return false;
-    return order.items.every(item => item.received && item.received.trim() !== "");
 }
 
 function updateTotals() {
@@ -269,7 +283,6 @@ function updateTotals() {
     document.getElementById("orderTotal").textContent = "$" + grandTotal.toFixed(2);
 }
 
-//maybe Save Before Record Change
 async function maybeSaveBeforeRecordChange() {
     if (!isDirty || !currentOrder) return true;
     if (confirm("Save changes to current order before switching?")) {
@@ -278,7 +291,6 @@ async function maybeSaveBeforeRecordChange() {
     return true;
 }
 
-// Save Order
 async function saveOrder() {
     if (!currentOrder) return;
 
@@ -300,7 +312,7 @@ async function saveOrder() {
             orderQty: parseFloat(inputs[3].value) || 0,
             pricePerUOM: parseFloat(inputs[4].value) || 0,
             discount: parseFloat(inputs[5].value) || 0,
-            dSalesTax: parseFloat(inputs[6].value) || 0,   // Item Sales Tax
+            dSalesTax: parseFloat(inputs[6].value) || 0,
             received: inputs[7].value.trim(),
             receivedQty: parseFloat(inputs[8].value) || 0,
             orderPrice: 0,
@@ -310,7 +322,9 @@ async function saveOrder() {
 
     currentOrder.items = rebuilt;
     currentOrder.items.forEach(recalcItem);
-    updateTotals();
+
+    // Update status and note
+    document.getElementById("orderStatus").value = getOrderStatus(currentOrder);
 
     try {
         await fetch("php/saveOrder.php", {
@@ -328,16 +342,14 @@ async function saveOrder() {
     }
 }
 
-// Remove Item
 function removeItem(index) {
-    if (isOrderClosed(currentOrder)) return;
+    if (getOrderStatus(currentOrder) === "Closed") return;
     currentOrder.items.splice(index, 1);
     isDirty = true;
     renderAllItems();
     triggerAutosave();
 }
 
-// Update Open Orders Total
 async function updateOpenOrdersTotal() {
     try {
         const response = await fetch("data/order.json");
@@ -345,8 +357,7 @@ async function updateOpenOrdersTotal() {
         let openTotal = 0;
 
         allOrders.forEach(order => {
-            const isOpen = order.items.some(item => !item.received || item.received.trim() === "");
-            if (isOpen) {
+            if (getOrderStatus(order) !== "Closed") {
                 openTotal += order.items.reduce((sum, item) => sum + (parseFloat(item.orderPrice) || 0), 0);
             }
         });
@@ -357,32 +368,32 @@ async function updateOpenOrdersTotal() {
     }
 }
 
-// New Order
 async function newOrder() {
     const nextNumber = await getNextOrderNumber();
 
     currentOrder = {
         orderNumber: nextNumber,
         vendor: "",
-        orderType: "Order",
         orderDate: new Date().toISOString().split('T')[0],
         vendorOrderNumber: "",
         paymentMethod: "",
         shippingMethod: "",
         trackingNumber: "",
         hSalesTax: 0,
+        note: "",
         items: []
     };
 
     document.getElementById("orderNumber").value = currentOrder.orderNumber;
     document.getElementById("vendor").value = "";
-    document.getElementById("orderType").value = "Order";
+    document.getElementById("orderStatus").value = "New";
     document.getElementById("orderDate").value = currentOrder.orderDate;
     document.getElementById("vendorOrderNumber").value = "";
     document.getElementById("paymentMethod").value = "";
     document.getElementById("shippingMethod").value = "";
     document.getElementById("trackingNumber").value = "";
     document.getElementById("hSalesTax").value = 0;
+    document.getElementById("orderNote").value = "";
 
     document.getElementById("itemsBody").innerHTML = "";
     addNewItem();
@@ -390,7 +401,6 @@ async function newOrder() {
     loadRecentOrders();
 }
 
-// Get Next Order Number
 async function getNextOrderNumber() {
     try {
         const response = await fetch("data/order.json");
