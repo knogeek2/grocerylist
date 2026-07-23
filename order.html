@@ -28,6 +28,10 @@
                     <input id="orderNumber" disabled>
                 </div>
                 <div class="item-field">
+                    <label>Date</label>
+                    <input id="orderDate" type="date" tabindex="3" onchange="onFieldChange('orderDate', this.value)">
+                </div>
+                <div class="item-field">
                     <label>Status</label>
                     <input id="orderStatus" readonly style="background:#f0f0f0; font-weight:bold;">
                 </div>
@@ -37,10 +41,6 @@
                            oninput="filterVendorList(this.value)"
                            onchange="onVendorSelected(this.value)">
                     <datalist id="vendorList"></datalist>
-                </div>
-                <div class="item-field">
-                    <label>Date</label>
-                    <input id="orderDate" type="date" tabindex="3" onchange="onFieldChange('orderDate', this.value)">
                 </div>
                 <div class="item-field">
                     <label>Vendor Order #</label>
@@ -78,9 +78,20 @@
                 <div class="footer-title">Order Summary</div>
 
                 <div class="footer-row">
+                    <span>Total Shipping Weight</span>
+                    <span id="totalShippingWeight">0 lbs</span>
+                </div>
+
+                <div class="footer-row">
                     <span>Order Total</span>
                     <span id="orderTotal">$0.00</span>
                 </div>
+
+                <div class="footer-row">
+                    <span>Sales Tax %</span>
+                    <span id="taxPercent">0.00%</span>
+                </div>
+
                 <div class="footer-row">
                     <span>Open Orders Total</span>
                     <span id="openOrdersTotal">$0.00</span>
@@ -97,9 +108,7 @@
                     </small>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <script src="js/order.js"></script>
+            <script src="js/order.js"></script>
 </body>
 </html>

@@ -1,11 +1,21 @@
-﻿// order.js - Updated with Order Status + Note field
+﻿// order.js - Complete Corrected Version
 
 let currentOrder = null;
 let isDirty = false;
 let autosaveTimeout = null;
 let vendors = [];
+let itemsMaster = [];
 
-// Vendor Lookup
+// Utility function to format numbers with commas and fixed decimals
+function formatNumber(value, decimals = 2) {
+    const num = parseFloat(value) || 0;
+    return num.toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    });
+}
+
+// Load Vendors
 async function loadVendors() {
     try {
         const response = await fetch("data/vendor.json");
@@ -13,7 +23,17 @@ async function loadVendors() {
         populateVendorDatalist();
     } catch (e) {
         console.error("Failed to load vendors", e);
-        vendors = [];
+    }
+}
+
+// Load Items Master
+async function loadItemsMaster() {
+    try {
+        const response = await fetch("data/item.json");
+        itemsMaster = await response.json();
+    } catch (e) {
+        console.error("Failed to load items", e);
+        itemsMaster = [];
     }
 }
 
@@ -26,6 +46,10 @@ function populateVendorDatalist() {
         option.value = v.vendorName || v.name || v;
         datalist.appendChild(option);
     });
+}
+
+function filterVendorList(value) {
+    // Can be expanded for live filtering if desired
 }
 
 async function onVendorSelected(value) {
@@ -54,30 +78,26 @@ async function onVendorSelected(value) {
     populateVendorDatalist();
 }
 
-// Compute Order Status
+function findItemBySku(sku) {
+    if (!sku) return null;
+    return itemsMaster.find(i => String(i.sku).toLowerCase() === String(sku).toLowerCase());
+}
+
 function getOrderStatus(order) {
     if (!order || !order.items || order.items.length === 0) return "New";
-
     const hasOnlyBlank = order.items.length === 1 &&
-        (!order.items[0].sku || order.items[0].sku.trim() === "") &&
-        (!order.items[0].itemName || order.items[0].itemName.trim() === "");
-
+        (!order.items[0].sku || order.items[0].sku.trim() === "");
     if (hasOnlyBlank) return "New";
-
     const allReceived = order.items.every(item =>
-        item.received && item.received.trim() !== "" &&
-        parseFloat(item.receivedQty || 0) > 0
+        item.received && item.received.trim() !== "" && parseFloat(item.receivedQty || 0) > 0
     );
-
     return allReceived ? "Closed" : "Open";
 }
 
-// Load Recent Orders
 async function loadRecentOrders() {
     try {
         const response = await fetch("data/order.json");
         const allOrders = await response.json();
-
         const unique = [...new Set(allOrders.map(o => String(o.orderNumber)))]
             .sort((a, b) => parseInt(b) - parseInt(a));
 
@@ -88,7 +108,6 @@ async function loadRecentOrders() {
             const li = document.createElement("li");
             li.textContent = orderNumber;
             li.onclick = () => loadOrder(orderNumber);
-
             if (currentOrder && String(currentOrder.orderNumber) === String(orderNumber)) {
                 li.classList.add("selected");
             }
@@ -125,22 +144,33 @@ function showSaveStatus(message, isError = false) {
     setTimeout(() => { if (statusEl) statusEl.textContent = ""; }, 2000);
 }
 
-// Core Load
 async function loadOrder(orderNumber) {
     if (!await maybeSaveBeforeRecordChange()) return;
 
     const response = await fetch("data/order.json");
     const allOrders = await response.json();
-
     const orderData = allOrders.find(o => String(o.orderNumber) === String(orderNumber));
     if (!orderData) return;
 
     currentOrder = JSON.parse(JSON.stringify(orderData));
 
+    // Pull shipWeight from master if the order item doesn't have it
+    currentOrder.items.forEach(item => {
+        if (item.shipWeight === undefined || item.shipWeight === null || item.shipWeight === "") {
+            const master = findItemBySku(item.sku);
+            if (master) {
+                item.shipWeight = master.shipWeight || 0;
+            } else {
+                item.shipWeight = 0;
+            }
+        }
+    });
+
     document.getElementById("orderNumber").value = currentOrder.orderNumber || "";
     document.getElementById("vendor").value = currentOrder.vendor || "";
     document.getElementById("orderStatus").value = getOrderStatus(currentOrder);
-    document.getElementById("orderDate").value = currentOrder.orderDate || "";
+    // Date fix
+    document.getElementById("orderDate").value = currentOrder.orderDate ? currentOrder.orderDate.split(' ')[0] : "";
     document.getElementById("vendorOrderNumber").value = currentOrder.vendorOrderNumber || "";
     document.getElementById("paymentMethod").value = currentOrder.paymentMethod || "";
     document.getElementById("shippingMethod").value = currentOrder.shippingMethod || "";
@@ -194,25 +224,31 @@ function createItemRow(index, item, isClosed = false) {
 
     row.innerHTML = `
         <label>SKU</label>
-        <input tabindex="${baseTab}" value="${item.sku || ''}" onchange="onItemChange(${index}, 'sku', this.value)" placeholder="SKU" ${disabled}>
+        <input tabindex="${baseTab}" value="${item.sku || ''}" onchange="onSkuChange(${index}, this.value)" placeholder="SKU" ${disabled}>
 
         <label>Item Name</label>
         <input tabindex="${baseTab + 1}" value="${item.itemName || ''}" onchange="onItemChange(${index}, 'itemName', this.value)" placeholder="Item Name" ${disabled}>
 
-        <label>SNAP?</label>
-        <input tabindex="${baseTab + 2}" type="number" value="${item.snapYes ?? 1}" onchange="onItemChange(${index}, 'snapYes', this.value)" ${disabled}>
-
         <label>Order Qty</label>
-        <input tabindex="${baseTab + 3}" type="number" step="0.01" value="${item.orderQty || 0}" onchange="onItemChange(${index}, 'orderQty', this.value)" ${disabled}>
+        <input tabindex="${baseTab + 2}" type="number" step="0.01" value="${item.orderQty || 0}" onchange="onItemChange(${index}, 'orderQty', this.value)" ${disabled}>
 
         <label>Price/UOM</label>
-        <input tabindex="${baseTab + 4}" type="number" step="0.01" value="${item.pricePerUOM || 0}" onchange="onItemChange(${index}, 'pricePerUOM', this.value)" ${disabled}>
+        <input tabindex="${baseTab + 3}" type="number" step="0.01" value="${item.pricePerUOM || 0}" onchange="onItemChange(${index}, 'pricePerUOM', this.value)" ${disabled}>
+
+        <label>Shipping Weight of One</label>
+        <input tabindex="${baseTab + 4}" type="number" step="0.01" value="${item.shipWeight || 0}" onchange="onItemChange(${index}, 'shipWeight', this.value)" ${disabled}>
 
         <label>Discount</label>
         <input tabindex="${baseTab + 5}" type="number" step="0.01" value="${item.discount || 0}" onchange="onItemChange(${index}, 'discount', this.value)" ${disabled}>
 
         <label>Item Sales Tax</label>
         <input tabindex="${baseTab + 6}" type="number" step="0.01" value="${item.dSalesTax || 0}" onchange="onItemChange(${index}, 'dSalesTax', parseFloat(this.value) || 0)" ${disabled}>
+
+        <label>Order Price</label>
+        <input tabindex="-1" type="number" step="0.01" value="${item.orderPrice || 0}" readonly style="background:#f0f0f0;">
+
+        <label>Purchase Price</label>
+        <input tabindex="-1" type="number" step="0.01" value="${item.receivedPrice || 0}" readonly style="background:#f0f0f0;">
 
         <label>Received Date</label>
         <input tabindex="${baseTab + 7}" type="date" value="${item.received || ''}" onchange="onItemChange(${index}, 'received', this.value)" ${disabled}>
@@ -226,6 +262,24 @@ function createItemRow(index, item, isClosed = false) {
     return row;
 }
 
+function onSkuChange(index, sku) {
+    console.log(`onSkuChange called - index: ${index}, SKU: "${sku}"`);
+    if (!currentOrder || !currentOrder.items || !currentOrder.items[index]) return;
+
+    const masterItem = findItemBySku(sku);
+    console.log("Found master item:", masterItem);
+    if (masterItem) {
+        currentOrder.items[index].itemName = masterItem.itemName || "";
+        currentOrder.items[index].snapYes = masterItem.snapYes || 0;
+        currentOrder.items[index].shipWeight = masterItem.shipWeight || 0;
+        console.log("Auto-filled item fields");
+    }
+
+    renderAllItems();
+
+    onItemChange(index, 'sku', sku);
+}
+
 function addNewItem() {
     if (!currentOrder) return;
     if (getOrderStatus(currentOrder) === "Closed") return;
@@ -235,7 +289,7 @@ function addNewItem() {
     currentOrder.items.push({
         sku: "", itemName: "", snapYes: 0, orderQty: 0, pricePerUOM: 0,
         discount: 0, dSalesTax: 0, received: "", receivedQty: 0,
-        orderPrice: 0, receivedPrice: 0
+        orderPrice: 0, receivedPrice: 0, shipWeight: 0
     });
 
     isDirty = true;
@@ -252,8 +306,24 @@ function onFieldChange(field, value) {
 
 function onItemChange(index, field, value) {
     if (getOrderStatus(currentOrder) === "Closed") return;
+    if (!currentOrder || !currentOrder.items) return;
+
+    // Ensure the item object exists
+    if (!currentOrder.items[index]) {
+        currentOrder.items[index] = {
+            sku: "", itemName: "", snapYes: 0, orderQty: 0, pricePerUOM: 0,
+            discount: 0, dSalesTax: 0, received: "", receivedQty: 0,
+            orderPrice: 0, receivedPrice: 0, shipWeight: 0
+        };
+    }
+
     currentOrder.items[index][field] = value;
     isDirty = true;
+
+    // Recalculate line totals and overall shipping weight
+    recalcItem(currentOrder.items[index]);
+    updateTotals();
+
     triggerAutosave();
 }
 
@@ -262,7 +332,6 @@ function recalcItem(item) {
     const price = parseFloat(item.pricePerUOM) || 0;
     const discount = parseFloat(item.discount) || 0;
     const tax = parseFloat(item.dSalesTax) || 0;
-
     item.orderPrice = (qty * price) - discount + tax;
     const rQty = parseFloat(item.receivedQty) || 0;
     item.receivedPrice = (rQty * price) - discount + tax;
@@ -271,16 +340,35 @@ function recalcItem(item) {
 function updateTotals() {
     let subtotal = 0;
     let lineTaxTotal = 0;
+    let totalWeight = 0;
 
     currentOrder.items.forEach(item => {
         subtotal += (parseFloat(item.orderPrice) || 0);
         lineTaxTotal += (parseFloat(item.dSalesTax) || 0);
+        totalWeight += (parseFloat(item.shipWeight || 0) * parseFloat(item.orderQty || 1));
     });
 
     const headerTax = parseFloat(currentOrder.hSalesTax) || 0;
     const grandTotal = subtotal + headerTax + lineTaxTotal;
 
-    document.getElementById("orderTotal").textContent = "$" + grandTotal.toFixed(2);
+    document.getElementById("orderTotal").textContent = "$" + formatNumber(grandTotal, 2);
+
+    // Sales Tax % (display only)
+    // Sales Tax % (display only)
+    const totalTax = headerTax + lineTaxTotal;
+    const taxPercent = subtotal > 0 ? (totalTax / subtotal) * 100 : 0;
+
+    // Show it somewhere in the footer (add an element if needed)
+    const taxPercentEl = document.getElementById("taxPercent");
+    if (taxPercentEl) {
+        taxPercentEl.textContent = formatNumber(taxPercent, 2) + "%";
+    }
+
+    const weightEl = document.getElementById("totalShippingWeight");
+    if (weightEl) {
+        weightEl.textContent = formatNumber(totalWeight, 2) + " lbs";
+        weightEl.style.color = totalWeight > 20 ? "red" : "";
+    }
 }
 
 async function maybeSaveBeforeRecordChange() {
@@ -302,19 +390,34 @@ async function saveOrder() {
         if (isNaN(index)) return;
 
         const inputs = row.querySelectorAll("input");
+
+        // Current field order (SNAP removed):
+        // 0: SKU
+        // 1: Item Name
+        // 2: Order Qty
+        // 3: Price/UOM
+        // 4: Shipping Weight of One
+        // 5: Discount
+        // 6: Item Sales Tax
+        // 7: Order Price (readonly)
+        // 8: Purchase Price (readonly)
+        // 9: Received Date
+        // 10: Received Qty
+
         const sku = inputs[0].value.trim();
         if (!sku) return;
 
         rebuilt.push({
             sku: sku,
             itemName: inputs[1].value.trim(),
-            snapYes: parseInt(inputs[2].value) || 0,
-            orderQty: parseFloat(inputs[3].value) || 0,
-            pricePerUOM: parseFloat(inputs[4].value) || 0,
+            snapYes: 0,                          // keep the property, just default it
+            orderQty: parseFloat(inputs[2].value) || 0,
+            pricePerUOM: parseFloat(inputs[3].value) || 0,
+            shipWeight: parseFloat(inputs[4].value) || 0,
             discount: parseFloat(inputs[5].value) || 0,
             dSalesTax: parseFloat(inputs[6].value) || 0,
-            received: inputs[7].value.trim(),
-            receivedQty: parseFloat(inputs[8].value) || 0,
+            received: inputs[9].value.trim(),
+            receivedQty: parseFloat(inputs[10].value) || 0,
             orderPrice: 0,
             receivedPrice: 0
         });
@@ -323,7 +426,6 @@ async function saveOrder() {
     currentOrder.items = rebuilt;
     currentOrder.items.forEach(recalcItem);
 
-    // Update status and note
     document.getElementById("orderStatus").value = getOrderStatus(currentOrder);
 
     try {
@@ -341,7 +443,6 @@ async function saveOrder() {
         showSaveStatus("Save failed", true);
     }
 }
-
 function removeItem(index) {
     if (getOrderStatus(currentOrder) === "Closed") return;
     currentOrder.items.splice(index, 1);
@@ -355,13 +456,11 @@ async function updateOpenOrdersTotal() {
         const response = await fetch("data/order.json");
         const allOrders = await response.json();
         let openTotal = 0;
-
         allOrders.forEach(order => {
             if (getOrderStatus(order) !== "Closed") {
                 openTotal += order.items.reduce((sum, item) => sum + (parseFloat(item.orderPrice) || 0), 0);
             }
         });
-
         document.getElementById("openOrdersTotal").textContent = "$" + openTotal.toFixed(2);
     } catch (e) {
         console.error("Failed to update open orders total", e);
@@ -370,7 +469,6 @@ async function updateOpenOrdersTotal() {
 
 async function newOrder() {
     const nextNumber = await getNextOrderNumber();
-
     currentOrder = {
         orderNumber: nextNumber,
         vendor: "",
@@ -421,4 +519,5 @@ document.addEventListener("DOMContentLoaded", () => {
     loadRecentOrders();
     updateOpenOrdersTotal();
     loadVendors();
+    loadItemsMaster();
 });
