@@ -1,4 +1,5 @@
 ﻿// order.js - Complete Corrected Version
+// Updated: SKU lookup from item.json + "Next SKU" suggest for brand-new items (Max+1 starting at 100001)
 
 let currentOrder = null;
 let isDirty = false;
@@ -227,9 +228,20 @@ function createItemRow(index, item, isClosed = false) {
     const baseTab = 30 + (index * 10);
     const disabled = isClosed ? 'disabled' : '';
 
+    // SKU cell: input + optional "Next" button for new / unknown items
+    // Also auto-suggests on blur if the field is left blank
     row.innerHTML = `
         <label>SKU</label>
-        <input tabindex="${baseTab}" value="${item.sku || ''}" onchange="onSkuChange(${index}, this.value)" placeholder="SKU" ${disabled}>
+        <span style="display:inline-flex; align-items:center; gap:4px; min-width:140px;">
+            <input tabindex="${baseTab}"
+                   value="${item.sku || ''}"
+                   onchange="onSkuChange(${index}, this.value)"
+                   onblur="onSkuBlur(${index}, this)"
+                   placeholder="SKU / UPC or blank"
+                   ${disabled}
+                   style="flex:1; min-width:90px;">
+            ${isClosed ? '' : `<button type="button" tabindex="-1" title="Suggest next available SKU (Max numeric + 1, starts at 100001)" onclick="suggestNextSku(${index})" style="padding:2px 6px; font-size:0.8em; white-space:nowrap;">Next</button>`}
+        </span>
 
         <label>Item Name</label>
         <input tabindex="${baseTab + 1}" value="${item.itemName || ''}" onchange="onItemChange(${index}, 'itemName', this.value)" placeholder="Item Name" ${disabled}>
@@ -267,22 +279,70 @@ function createItemRow(index, item, isClosed = false) {
     return row;
 }
 
+/**
+ * Called when SKU field loses focus.
+ * If left blank on an open order, automatically suggest the next available SKU.
+ */
+function onSkuBlur(index, inputEl) {
+    if (getOrderStatus(currentOrder) === "Closed") return;
+    if (!inputEl || inputEl.value.trim() !== "") return;
+    // Field is blank → auto-suggest
+    suggestNextSku(index);
+}
+
+/**
+ * Fetches next available numeric SKU from server (Max + 1, floor 100001)
+ * and applies it via the normal onSkuChange path.
+ */
+async function suggestNextSku(index) {
+    if (getOrderStatus(currentOrder) === "Closed") return;
+    if (!currentOrder || !currentOrder.items || !currentOrder.items[index]) return;
+
+    try {
+        const response = await fetch("php/getNextSku.php");
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const data = await response.json();
+        const nextSku = String(data.nextSku || 100001);
+
+        onSkuChange(index, nextSku);
+
+        // Move focus to Item Name for faster entry
+        setTimeout(() => {
+            const row = document.querySelector(`.order-item-row[data-index="${index}"]`);
+            if (row) {
+                const inputs = row.querySelectorAll("input");
+                // inputs[0] = SKU, inputs[1] = Item Name
+                if (inputs[1]) inputs[1].focus();
+            }
+        }, 40);
+    } catch (e) {
+        console.error("Failed to get next SKU", e);
+        showSaveStatus("Could not get next SKU", true);
+    }
+}
+
 function onSkuChange(index, sku) {
     console.log(`onSkuChange called - index: ${index}, SKU: "${sku}"`);
     if (!currentOrder || !currentOrder.items || !currentOrder.items[index]) return;
 
+    // Write the SKU into the model FIRST so the subsequent re-render keeps it
+    currentOrder.items[index].sku = sku;
+
     const masterItem = findItemBySku(sku);
     console.log("Found master item:", masterItem);
     if (masterItem) {
+        // Known item → populate everything we know
         currentOrder.items[index].itemName = masterItem.itemName || "";
         currentOrder.items[index].snapYes = masterItem.snapYes || 0;
         currentOrder.items[index].shipWeight = masterItem.shipWeight || 0;
-        console.log("Auto-filled item fields");
+        console.log("Auto-filled item fields from item.json");
     }
+    // If not found: leave any user-typed name / weight alone (new item)
 
-    renderAllItems();
-
-    onItemChange(index, 'sku', sku);
+    isDirty = true;
+    renderAllItems();          // re-render now has the correct SKU + any auto-fills
+    updateTotals();
+    triggerAutosave();
 }
 
 function addNewItem() {
@@ -359,11 +419,9 @@ function updateTotals() {
     document.getElementById("orderTotal").textContent = "$" + formatNumber(grandTotal, 2);
 
     // Sales Tax % (display only)
-    // Sales Tax % (display only)
     const totalTax = headerTax + lineTaxTotal;
     const taxPercent = subtotal > 0 ? (totalTax / subtotal) * 100 : 0;
 
-    // Show it somewhere in the footer (add an element if needed)
     const taxPercentEl = document.getElementById("taxPercent");
     if (taxPercentEl) {
         taxPercentEl.textContent = formatNumber(taxPercent, 2) + "%";
@@ -396,7 +454,7 @@ async function saveOrder() {
 
         const inputs = row.querySelectorAll("input");
 
-        // Current field order (SNAP removed):
+        // Field order is unchanged (the "Next" button is not an <input>):
         // 0: SKU
         // 1: Item Name
         // 2: Order Qty
@@ -448,6 +506,7 @@ async function saveOrder() {
         showSaveStatus("Save failed", true);
     }
 }
+
 function removeItem(index) {
     if (getOrderStatus(currentOrder) === "Closed") return;
     currentOrder.items.splice(index, 1);
