@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Enrich Shipping Weights</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #status {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 6px;
+            background: #f5f5f5;
+            white-space: pre-wrap;
+        }
+
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <h1>Enrich Shipping Weights</h1>
+    <p>This will fill missing <code>shipWeight</code> values in <code>order.json</code> from <code>item.json</code>.</p>
+
+    <button onclick="runEnrich()">Enrich Now</button>
+
+    <div id="status">Ready.</div>
+
+    <script>
+        async function runEnrich() {
+            const status = document.getElementById("status");
+            status.className = "";
+            status.textContent = "Running…";
+
+            try {
+                const response = await fetch("php/enrichShipWeight.php", {
+                    method: "POST"
+                });
+                const result = await response.text();
+
+                if (response.ok) {
+                    status.className = "success";
+                    status.textContent = result;
+                } else {
+                    status.className = "error";
+                    status.textContent = "Error:\n" + result;
+                }
+            } catch (err) {
+                status.className = "error";
+                status.textContent = "Network / fetch error:\n" + err.message;
+            }
+        }
+    </script>
+</body>
+</html>

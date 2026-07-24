@@ -98,17 +98,22 @@ async function loadRecentOrders() {
     try {
         const response = await fetch("data/order.json");
         const allOrders = await response.json();
-        const unique = [...new Set(allOrders.map(o => String(o.orderNumber)))]
-            .sort((a, b) => parseInt(b) - parseInt(a));
+
+        // Keep only open orders, newest first, max 10
+        const openOrders = allOrders
+            .filter(order => getOrderStatus(order) !== "Closed")
+            .sort((a, b) => parseInt(b.orderNumber) - parseInt(a.orderNumber))
+            .slice(0, 10);
 
         const container = document.getElementById("recentOrdersList");
         container.innerHTML = "";
 
-        unique.forEach(orderNumber => {
+        openOrders.forEach(order => {
             const li = document.createElement("li");
-            li.textContent = orderNumber;
-            li.onclick = () => loadOrder(orderNumber);
-            if (currentOrder && String(currentOrder.orderNumber) === String(orderNumber)) {
+            li.textContent = order.orderNumber;
+            li.onclick = () => loadOrder(order.orderNumber);
+
+            if (currentOrder && String(currentOrder.orderNumber) === String(order.orderNumber)) {
                 li.classList.add("selected");
             }
             container.appendChild(li);
